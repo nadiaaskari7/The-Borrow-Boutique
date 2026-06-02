@@ -1,11 +1,12 @@
 import type { Page } from '../types'
 
-const pageLabels: Record<Page, string> = {
+const pageLabels: Partial<Record<Page, string>> = {
   home: 'Home',
   dresses: 'Dresses',
-  'try-on': 'Try-ons',
-  inquiry: 'Inquiries',
-  rent: 'Rent',
+  'how-it-works': 'How it works',
+  faq: 'FAQ',
+  'try-on': 'Try-on',
+  inquiry: 'Contact',
 }
 
 export function SiteHeader({ currentPage, onNavigate }: { currentPage: Page; onNavigate: (page: Page) => void }) {
@@ -27,6 +28,9 @@ export function SiteHeader({ currentPage, onNavigate }: { currentPage: Page; onN
           </button>
         ))}
       </nav>
+      <button className="header-cta" onClick={() => onNavigate('dresses')} type="button">
+        Browse collection
+      </button>
     </header>
   )
 }

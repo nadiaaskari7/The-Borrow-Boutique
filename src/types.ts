@@ -1,13 +1,31 @@
-export type Page = 'home' | 'dresses' | 'try-on' | 'inquiry' | 'rent'
+export type Page =
+  | 'home'
+  | 'dresses'
+  | 'dress-detail'
+  | 'try-on'
+  | 'inquiry'
+  | 'rent'
+  | 'how-it-works'
+  | 'faq'
 
 export type BoutiqueSize = 'XS' | 'S' | 'M' | 'L'
 export type SizeFilter = 'All' | BoutiqueSize
+
+export type DressFilters = {
+  size: SizeFilter
+  colour: string
+  brand: string
+  type: string
+  price: string
+}
 
 export type Dress = {
   id: string
   name: string
   size: BoutiqueSize
+  sizes: BoutiqueSize[]
   rawSize?: string
+  rawSizes?: string[]
   brand?: string
   type?: string
   designer?: string
@@ -22,5 +40,6 @@ export type Dress = {
   imagePath?: string
   description?: string
   available?: boolean
+  isNew?: boolean
   paymentLink?: string
 }

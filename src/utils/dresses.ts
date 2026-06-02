@@ -20,6 +20,13 @@ export function normalizeDressSize(size: unknown): BoutiqueSize {
   return 'L'
 }
 
+export function normalizeDressSizes(size: unknown): BoutiqueSize[] {
+  const values = Array.isArray(size) ? size : [size]
+  const normalized = values.map((value) => normalizeDressSize(value))
+
+  return Array.from(new Set(normalized))
+}
+
 export function money(value = 0) {
   return new Intl.NumberFormat('en-NZ', {
     style: 'currency',

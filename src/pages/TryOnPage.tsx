@@ -32,7 +32,7 @@ export function TryOnPage({
           <select name="dressId" defaultValue={selectedDress?.id}>
             {dresses.map((dress) => (
               <option key={dress.id} value={dress.id}>
-                {dress.name} - {dress.size}
+                {dress.name} - {dress.sizes.join(' / ')}
               </option>
             ))}
           </select>

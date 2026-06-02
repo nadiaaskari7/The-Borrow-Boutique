@@ -29,8 +29,8 @@ export function RentPage({
           <p className="eyebrow">Rental request</p>
           <h1>{selectedDress.name}</h1>
           <p>
-            {selectedDress.brand ?? selectedDress.designer ?? 'The Borrow Boutique'} / Size{' '}
-            {selectedDress.size}
+            {selectedDress.brand ?? selectedDress.designer ?? 'The Borrow Boutique'} / Sizes{' '}
+            {selectedDress.sizes.join(' / ')}
           </p>
           <dl>
             <div>

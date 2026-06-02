@@ -7,12 +7,15 @@ import { Notice } from './components/Notice'
 import { SiteHeader } from './components/SiteHeader'
 import { db, storage } from './firebase/firebaseConfig'
 import { DressesPage } from './pages/DressesPage'
+import { DressDetailPage } from './pages/DressDetailPage'
+import { FaqPage } from './pages/FaqPage'
+import { HowItWorksPage } from './pages/HowItWorksPage'
 import { HomePage } from './pages/HomePage'
 import { InquiryPage } from './pages/InquiryPage'
 import { RentPage } from './pages/RentPage'
 import { TryOnPage } from './pages/TryOnPage'
-import type { Dress, Page, SizeFilter } from './types'
-import { normalizeDressSize } from './utils/dresses'
+import type { Dress, DressFilters, Page } from './types'
+import { normalizeDressSizes } from './utils/dresses'
 
 const fallbackDresses: Dress[] = [
   {
@@ -20,31 +23,43 @@ const fallbackDresses: Dress[] = [
     name: 'Satin Cowl Midi',
     designer: 'Boutique edit',
     size: 'XS',
+    sizes: ['XS'],
     rawSize: '6',
+    rawSizes: ['6'],
     color: 'Blush',
     rentalPrice: 89,
     bond: 50,
     description: 'A sleek event dress for birthdays, engagement parties, and dinners.',
     available: true,
+    isNew: true,
   },
   {
     id: 'sample-2',
     name: 'Black Tie Gown',
     designer: 'Boutique edit',
     size: 'M',
+    sizes: ['M'],
     rawSize: '10',
+    rawSizes: ['10'],
     color: 'Black',
     rentalPrice: 129,
     bond: 80,
     description: 'Floor-length gown with a structured bodice and soft skirt.',
     available: true,
+    isNew: false,
   },
 ]
 
 function App() {
   const [page, setPage] = useState<Page>('home')
   const [dresses, setDresses] = useState<Dress[]>([])
-  const [selectedSize, setSelectedSize] = useState<SizeFilter>('All')
+  const [filters, setFilters] = useState<DressFilters>({
+    size: 'All',
+    colour: 'All',
+    brand: 'All',
+    type: 'All',
+    price: 'All',
+  })
   const [selectedDressId, setSelectedDressId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -59,7 +74,7 @@ function App() {
         const snapshot = await getDocs(query(collection(db, 'Dresses'), orderBy('name')))
         const loaded = await Promise.all(
           snapshot.docs.map(async (doc) => {
-            const data = doc.data() as Partial<Omit<Dress, 'id'>>
+            const data = doc.data() as Partial<Omit<Dress, 'id'>> & { new?: boolean }
             const imageUrls = data.imageUrls ?? []
             let imageUrl = data.imageUrl ?? imageUrls[0]
 
@@ -67,13 +82,19 @@ function App() {
               imageUrl = await getDownloadURL(ref(storage, data.imagePath))
             }
 
-            const rawSize = String(data.rawSize ?? data.size ?? '')
+            const firebaseSize = data.rawSize ?? data.size
+            const rawSizes = Array.isArray(firebaseSize)
+              ? firebaseSize.map((size) => String(size))
+              : [String(firebaseSize ?? '')]
+            const sizes = normalizeDressSizes(firebaseSize)
 
             return {
               id: doc.id,
               name: data.name ?? 'Untitled dress',
-              size: normalizeDressSize(data.size),
-              rawSize,
+              size: sizes[0],
+              sizes,
+              rawSize: rawSizes[0],
+              rawSizes,
               brand: data.brand,
               type: data.type,
               designer: data.designer ?? data.brand,
@@ -88,6 +109,7 @@ function App() {
               imagePath: data.imagePath,
               description: data.description,
               available: data.available ?? true,
+              isNew: Boolean(data.isNew ?? data.new),
               paymentLink: data.paymentLink,
             }
           }),
@@ -109,9 +131,33 @@ function App() {
     loadDresses()
   }, [])
 
+  const filterOptions = useMemo(() => {
+    const colours = Array.from(
+      new Set(dresses.map((dress) => dress.color ?? dress.colour).filter(Boolean) as string[]),
+    ).sort()
+    const brands = Array.from(
+      new Set(dresses.map((dress) => dress.brand ?? dress.designer).filter(Boolean) as string[]),
+    ).sort()
+    const types = Array.from(new Set(dresses.map((dress) => dress.type).filter(Boolean) as string[])).sort()
+
+    return { colours, brands, types }
+  }, [dresses])
+
   const filteredDresses = useMemo(
-    () => dresses.filter((dress) => selectedSize === 'All' || dress.size === selectedSize),
-    [dresses, selectedSize],
+    () =>
+      dresses.filter((dress) => {
+        const dressColour = dress.color ?? dress.colour
+        const dressBrand = dress.brand ?? dress.designer
+
+        return (
+          (filters.size === 'All' || dress.sizes.includes(filters.size)) &&
+          (filters.colour === 'All' || dressColour === filters.colour) &&
+          (filters.brand === 'All' || dressBrand === filters.brand) &&
+          (filters.type === 'All' || dress.type === filters.type) &&
+          matchesPriceFilter(dress.rentalPrice, filters.price)
+        )
+      }),
+    [dresses, filters],
   )
 
   const selectedDress = dresses.find((dress) => dress.id === selectedDressId) ?? dresses[0]
@@ -160,7 +206,9 @@ function App() {
       dressId: selectedDress.id,
       dressName: selectedDress.name,
       size: selectedDress.size,
+      sizes: selectedDress.sizes,
       rawSize: selectedDress.rawSize,
+      rawSizes: selectedDress.rawSizes,
       rentalPrice: selectedDress.rentalPrice,
       bond: selectedDress.bond ?? 0,
       paymentStatus: selectedDress.paymentLink ? 'payment-link-opened' : 'payment-pending',
@@ -188,21 +236,42 @@ function App() {
           dresses={dresses}
           onAsk={(dressId) => selectDressAndPage(dressId, 'inquiry')}
           onNavigate={setPage}
+          onOpen={(dressId) => selectDressAndPage(dressId, 'dress-detail')}
           onRent={(dressId) => selectDressAndPage(dressId, 'rent')}
         />
       )}
 
       {page === 'dresses' && (
         <DressesPage
+          brands={filterOptions.brands}
+          colours={filterOptions.colours}
           dresses={filteredDresses}
+          filters={filters}
           isLoading={isLoading}
           loadError={loadError}
           onAsk={(dressId) => selectDressAndPage(dressId, 'inquiry')}
+          onClearFilters={() =>
+            setFilters({ size: 'All', colour: 'All', brand: 'All', type: 'All', price: 'All' })
+          }
+          onFilterChange={setFilters}
+          onOpen={(dressId) => selectDressAndPage(dressId, 'dress-detail')}
           onRent={(dressId) => selectDressAndPage(dressId, 'rent')}
-          onSelectSize={setSelectedSize}
-          selectedSize={selectedSize}
+          types={filterOptions.types}
         />
       )}
+
+      {page === 'dress-detail' && (
+        <DressDetailPage
+          dress={selectedDress}
+          onAsk={(dressId) => selectDressAndPage(dressId, 'inquiry')}
+          onBack={() => setPage('dresses')}
+          onRent={(dressId) => selectDressAndPage(dressId, 'rent')}
+        />
+      )}
+
+      {page === 'how-it-works' && <HowItWorksPage onNavigate={setPage} />}
+
+      {page === 'faq' && <FaqPage onNavigate={setPage} />}
 
       {page === 'inquiry' && (
         <InquiryPage dresses={dresses} onSubmit={handleInquiry} selectedDress={selectedDress} />
@@ -215,6 +284,16 @@ function App() {
       {page === 'rent' && <RentPage onSubmit={handleRental} selectedDress={selectedDress} />}
     </div>
   )
+}
+
+function matchesPriceFilter(price: number, filter: string) {
+  if (filter === 'All') return true
+  if (filter === 'under-50') return price < 50
+  if (filter === '50-80') return price >= 50 && price <= 80
+  if (filter === '80-120') return price > 80 && price <= 120
+  if (filter === '120-plus') return price > 120
+
+  return true
 }
 
 export default App
