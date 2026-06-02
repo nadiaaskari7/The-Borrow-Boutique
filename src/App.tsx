@@ -59,7 +59,7 @@ function App() {
     colour: 'All',
     brand: 'All',
     type: 'All',
-    price: 'All',
+    maxPrice: 250,
   })
   const [selectedDressId, setSelectedDressId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -155,7 +155,7 @@ function App() {
           (filters.colour === 'All' || dressColour === filters.colour) &&
           (filters.brand === 'All' || dressBrand === filters.brand) &&
           (filters.type === 'All' || dress.type === filters.type) &&
-          matchesPriceFilter(dress.rentalPrice, filters.price)
+          dress.rentalPrice <= filters.maxPrice
         )
       }),
     [dresses, filters],
@@ -166,6 +166,11 @@ function App() {
   function selectDressAndPage(dressId: string, nextPage: Page) {
     setSelectedDressId(dressId)
     setPage(nextPage)
+  }
+
+  function browseWithFilters(nextFilters: Partial<DressFilters>) {
+    setFilters({ size: 'All', colour: 'All', brand: 'All', type: 'All', maxPrice: 250, ...nextFilters })
+    setPage('dresses')
   }
 
   async function handleInquiry(event: FormEvent<HTMLFormElement>) {
@@ -229,16 +234,14 @@ function App() {
 
   return (
     <div className="app-shell">
-      <SiteHeader currentPage={page} onNavigate={setPage} />
+      <SiteHeader currentPage={page} onBrowseFilter={browseWithFilters} onNavigate={setPage} />
       <Notice message={notice} onDismiss={() => setNotice('')} />
 
       {page === 'home' && (
         <HomePage
           dresses={dresses}
-          onAsk={(dressId) => selectDressAndPage(dressId, 'inquiry')}
           onNavigate={setPage}
           onOpen={(dressId) => selectDressAndPage(dressId, 'dress-detail')}
-          onRent={(dressId) => selectDressAndPage(dressId, 'rent')}
         />
       )}
 
@@ -250,13 +253,11 @@ function App() {
           filters={filters}
           isLoading={isLoading}
           loadError={loadError}
-          onAsk={(dressId) => selectDressAndPage(dressId, 'inquiry')}
           onClearFilters={() =>
-            setFilters({ size: 'All', colour: 'All', brand: 'All', type: 'All', price: 'All' })
+            setFilters({ size: 'All', colour: 'All', brand: 'All', type: 'All', maxPrice: 250 })
           }
           onFilterChange={setFilters}
           onOpen={(dressId) => selectDressAndPage(dressId, 'dress-detail')}
-          onRent={(dressId) => selectDressAndPage(dressId, 'rent')}
           types={filterOptions.types}
         />
       )}
@@ -264,8 +265,10 @@ function App() {
       {page === 'dress-detail' && (
         <DressDetailPage
           dress={selectedDress}
+          dresses={dresses}
           onAsk={(dressId) => selectDressAndPage(dressId, 'inquiry')}
           onBack={() => setPage('dresses')}
+          onOpen={(dressId) => selectDressAndPage(dressId, 'dress-detail')}
           onRent={(dressId) => selectDressAndPage(dressId, 'rent')}
         />
       )}
@@ -287,16 +290,6 @@ function App() {
       <Footer onNavigate={setPage} />
     </div>
   )
-}
-
-function matchesPriceFilter(price: number, filter: string) {
-  if (filter === 'All') return true
-  if (filter === 'under-50') return price < 50
-  if (filter === '50-80') return price >= 50 && price <= 80
-  if (filter === '80-120') return price > 80 && price <= 120
-  if (filter === '120-plus') return price > 120
-
-  return true
 }
 
 export default App

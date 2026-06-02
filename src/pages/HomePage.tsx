@@ -6,35 +6,38 @@ const testimonials = [
   {
     quote:
       "Wore the most stunning gown to my sister's wedding. The try-on booking made finding the right size so easy.",
-    author: 'Sophie M., Brisbane',
+    author: 'Sophie M., Auckland',
   },
   {
     quote:
       'I tried on three dresses and found the perfect one in 20 minutes. Total lifesaver for a last-minute event!',
-    author: 'Jade K., Sydney',
+    author: 'Jade K., Wellington',
   },
   {
     quote:
       'I rent from here every season. The collection is always fresh and each dress arrives beautifully packaged.',
-    author: 'Mia L., Melbourne',
+    author: 'Mia L., Christchurch',
   },
 ]
 
 export function HomePage({
   dresses,
   onNavigate,
-  onAsk,
   onOpen,
-  onRent,
 }: {
   dresses: Dress[]
   onNavigate: (page: Page) => void
-  onAsk: (dressId: string) => void
   onOpen: (dressId: string) => void
-  onRent: (dressId: string) => void
 }) {
   const featured = dresses.filter((dress) => dress.isNew).slice(0, 4)
   const displayDresses = featured.length ? featured : dresses.slice(0, 4)
+  const heroDress =
+    dresses.find((dress) => {
+      const name = dress.name.toLowerCase()
+      return name.includes('valerie') && name.includes('corset')
+    }) ??
+    dresses.find((dress) => dress.name.toLowerCase().includes('valerie')) ??
+    dresses[0]
 
   return (
     <main>
@@ -43,7 +46,7 @@ export function HomePage({
         <div className="hero-copy">
           <div className="hero-badge">
             <span className="hero-badge-dot" />
-            Sydney's curated dress rental boutique
+            Auckland-based dress rental, available New Zealand-wide
           </div>
           <p className="eyebrow">Designer looks, rental prices</p>
           <h1>
@@ -64,7 +67,7 @@ export function HomePage({
             </button>
           </div>
         </div>
-        <DressImage className="hero-dress" dress={dresses[0]} />
+        <DressImage className="hero-dress" dress={heroDress} />
       </section>
 
       {/* Value propositions */}
@@ -95,9 +98,7 @@ export function HomePage({
         <DressGrid
           dresses={displayDresses}
           emptyMessage="New dresses coming soon — check back shortly."
-          onAsk={onAsk}
           onOpen={onOpen}
-          onRent={onRent}
         />
         <div style={{ marginTop: '28px' }}>
           <button className="secondary" onClick={() => onNavigate('dresses')} type="button">
@@ -148,7 +149,7 @@ export function HomePage({
       <section className="testimonials">
         <div className="section-title">
           <p className="eyebrow">What our renters say</p>
-          <h2>Loved by women across Australia</h2>
+          <h2>Loved by renters across New Zealand</h2>
         </div>
         <div className="testimonial-grid">
           {testimonials.map((t) => (

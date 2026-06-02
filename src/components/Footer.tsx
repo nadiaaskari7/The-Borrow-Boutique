@@ -60,8 +60,8 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2025 The Borrow Boutique. All rights reserved.</p>
-        <p>Sustainable fashion rental · Sydney, Australia</p>
+        <p>(c) 2026 The Borrow Boutique. All rights reserved.</p>
+        <p>Auckland-based dress rental. Available New Zealand-wide.</p>
       </div>
     </footer>
   )

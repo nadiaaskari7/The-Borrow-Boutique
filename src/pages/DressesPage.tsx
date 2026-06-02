@@ -10,11 +10,9 @@ export function DressesPage({
   filters,
   isLoading,
   loadError,
-  onAsk,
   onClearFilters,
   onFilterChange,
   onOpen,
-  onRent,
   types,
 }: {
   brands: string[]
@@ -23,11 +21,9 @@ export function DressesPage({
   filters: DressFilters
   isLoading: boolean
   loadError: string
-  onAsk: (dressId: string) => void
   onClearFilters: () => void
   onFilterChange: (filters: DressFilters) => void
   onOpen: (dressId: string) => void
-  onRent: (dressId: string) => void
   types: string[]
 }) {
   const updateFilter = <Key extends keyof DressFilters>(key: Key, value: DressFilters[Key]) => {
@@ -107,13 +103,21 @@ export function DressesPage({
 
             <label className="filter-group">
               <span>Price</span>
-              <select value={filters.price} onChange={(event) => updateFilter('price', event.target.value)}>
-                <option value="All">All prices</option>
-                <option value="under-50">Under $50</option>
-                <option value="50-80">$50 - $80</option>
-                <option value="80-120">$80 - $120</option>
-                <option value="120-plus">$120+</option>
-              </select>
+              <div className="price-slider">
+                <input
+                  max="250"
+                  min="0"
+                  onChange={(event) => updateFilter('maxPrice', Number(event.target.value))}
+                  step="5"
+                  type="range"
+                  value={filters.maxPrice}
+                />
+                <div>
+                  <span>$0</span>
+                  <strong>Up to ${filters.maxPrice}</strong>
+                  <span>$250+</span>
+                </div>
+              </div>
             </label>
           </aside>
 
@@ -121,7 +125,7 @@ export function DressesPage({
             <div className="result-count">
               <span>{dresses.length} dresses</span>
             </div>
-            <DressGrid dresses={dresses} onAsk={onAsk} onOpen={onOpen} onRent={onRent} />
+            <DressGrid dresses={dresses} onOpen={onOpen} />
           </section>
         </div>
       )}

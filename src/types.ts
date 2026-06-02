@@ -16,7 +16,7 @@ export type DressFilters = {
   colour: string
   brand: string
   type: string
-  price: string
+  maxPrice: number
 }
 
 export type Dress = {

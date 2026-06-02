@@ -1,16 +1,21 @@
 import { useMemo, useState } from 'react'
 import type { Dress } from '../types'
 import { money } from '../utils/dresses'
+import { DressGrid } from '../components/DressGrid'
 
 export function DressDetailPage({
   dress,
+  dresses,
   onBack,
   onAsk,
+  onOpen,
   onRent,
 }: {
   dress?: Dress
+  dresses: Dress[]
   onBack: () => void
   onAsk: (dressId: string) => void
+  onOpen: (dressId: string) => void
   onRent: (dressId: string) => void
 }) {
   const images = useMemo(
@@ -21,6 +26,24 @@ export function DressDetailPage({
   const [activeImage, setActiveImage] = useState(0)
   const [deliveryMethod, setDeliveryMethod] = useState<'Post' | 'Pick up'>('Post')
   const currentImage = uniqueImages[activeImage] ?? uniqueImages[0]
+  const relatedDresses = useMemo(() => {
+    if (!dress) return []
+
+    const related = dresses.filter((candidate) => {
+      if (candidate.id === dress.id) return false
+
+      const sameType = Boolean(dress.type && candidate.type === dress.type)
+      const sharedSize = candidate.sizes.some((size) => dress.sizes.includes(size))
+
+      return sameType || sharedSize
+    })
+
+    const fallback = dresses.filter(
+      (candidate) => candidate.id !== dress.id && !related.some((relatedDress) => relatedDress.id === candidate.id),
+    )
+
+    return [...related, ...fallback].slice(0, 4)
+  }, [dress, dresses])
 
   if (!dress) {
     return (
@@ -165,6 +188,16 @@ export function DressDetailPage({
           </section>
         </aside>
       </section>
+
+      {relatedDresses.length > 0 && (
+        <section className="related-section">
+          <div className="section-title">
+            <p className="eyebrow">You may also like</p>
+            <h2>Similar rentals</h2>
+          </div>
+          <DressGrid dresses={relatedDresses} onOpen={onOpen} />
+        </section>
+      )}
     </main>
   )
 }
