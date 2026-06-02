@@ -15,7 +15,10 @@ export function DressCard({
 }) {
   return (
     <article className="dress-card" onClick={() => onOpen(dress.id)}>
-      <DressImage dress={dress} />
+      <div className="dress-card-image-wrap">
+        <DressImage dress={dress} />
+        {dress.isNew && <span className="dress-badge">New in</span>}
+      </div>
       <div className="dress-card-body">
         <div>
           <div className="dress-card-topline">

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { addDoc, collection, getDocs, orderBy, query, serverTimestamp } from 'firebase/firestore'
 import { getDownloadURL, ref } from 'firebase/storage'
 import './App.css'
+import { Footer } from './components/Footer'
 import { Notice } from './components/Notice'
 import { SiteHeader } from './components/SiteHeader'
 import { db, storage } from './firebase/firebaseConfig'
@@ -282,6 +283,8 @@ function App() {
       )}
 
       {page === 'rent' && <RentPage onSubmit={handleRental} selectedDress={selectedDress} />}
+
+      <Footer onNavigate={setPage} />
     </div>
   )
 }
