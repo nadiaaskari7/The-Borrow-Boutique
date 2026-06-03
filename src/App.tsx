@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { addDoc, collection, getDocs, orderBy, query, serverTimestamp } from 'firebase/firestore'
+import { collection, getDocs, orderBy, query } from 'firebase/firestore'
 import { getDownloadURL, ref } from 'firebase/storage'
 import './App.css'
+import {
+  createInquiry,
+  createRentalRequest,
+  createTryOnBooking,
+  formDataToPayload,
+} from './api/bookings'
 import { Footer } from './components/Footer'
 import { Notice } from './components/Notice'
 import { SiteHeader } from './components/SiteHeader'
@@ -191,62 +197,61 @@ function App() {
 
   async function handleInquiry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const data = Object.fromEntries(new FormData(event.currentTarget))
+    const form = event.currentTarget
+    const data = formDataToPayload(form)
+    const inquiryDress = dresses.find((dress) => dress.id === data.dressId)
 
-    await addDoc(collection(db, 'inquiries'), {
+    await createInquiry({
       ...data,
-      status: 'new',
-      createdAt: serverTimestamp(),
+      dressName: inquiryDress?.name ?? '',
     })
 
-    event.currentTarget.reset()
-    setNotice('Inquiry sent. You can reply from Firebase or your admin tools.')
+    form.reset()
+    setNotice('Inquiry sent. We will reply as soon as possible.')
   }
 
   async function handleTryOn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const data = Object.fromEntries(new FormData(event.currentTarget))
+    const form = event.currentTarget
+    const data = formDataToPayload(form)
+    const tryOnDress = dresses.find((dress) => dress.id === data.dressId)
 
-    await addDoc(collection(db, 'tryOnBookings'), {
+    await createTryOnBooking({
       ...data,
-      status: 'requested',
-      createdAt: serverTimestamp(),
+      dressName: tryOnDress?.name ?? '',
     })
 
-    event.currentTarget.reset()
-    setNotice('Try-on request saved. Confirm the time before it is locked in.')
+    form.reset()
+    setNotice('Try-on request sent. We will confirm the time before it is locked in.')
   }
 
   async function handleRental(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!selectedDress) return
 
-    const data = Object.fromEntries(new FormData(event.currentTarget))
+    const form = event.currentTarget
+    const data = formDataToPayload(form)
 
-    await addDoc(collection(db, 'rentalRequests'), {
+    await createRentalRequest({
       ...data,
       dressId: selectedDress.id,
       dressName: selectedDress.name,
       size: String(data.rentalSize ?? selectedRentalSize ?? selectedDress.size),
-      sizes: selectedDress.sizes,
-      rawSize: selectedDress.rawSize,
-      rawSizes: selectedDress.rawSizes,
-      rentalPrice: selectedDress.rentalPrice,
-      shippingFee: Number(data.shippingFee ?? 0),
-      totalDue: Number(data.totalDue ?? selectedDress.rentalPrice),
-      paymentStatus: selectedDress.paymentLink ? 'payment-link-opened' : 'payment-pending',
-      status: 'requested',
-      createdAt: serverTimestamp(),
+      sizes: selectedDress.sizes.join(', '),
+      rawSize: selectedDress.rawSize ?? '',
+      rawSizes: selectedDress.rawSizes?.join(', ') ?? '',
+      rentalPrice: String(selectedDress.rentalPrice),
+      paymentLink: selectedDress.paymentLink ?? '',
     })
 
     if (selectedDress.paymentLink) {
       window.open(selectedDress.paymentLink, '_blank', 'noopener,noreferrer')
       setNotice('Rental request saved and the payment page has opened.')
     } else {
-      setNotice('Rental request saved. Add a Stripe payment link to this dress to take payment online.')
+      setNotice('Rental request sent. We will confirm availability and payment details.')
     }
 
-    event.currentTarget.reset()
+    form.reset()
   }
 
   return (
