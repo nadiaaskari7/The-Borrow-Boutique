@@ -1,11 +1,15 @@
 import { initializeApp } from 'firebase-admin/app'
 import { FieldValue, getFirestore } from 'firebase-admin/firestore'
-import { HttpsError, onCall } from 'firebase-functions/v2/https'
+import { defineSecret } from 'firebase-functions/params'
+import { CallableRequest, HttpsError, onCall, onRequest } from 'firebase-functions/v2/https'
+import Stripe from 'stripe'
 
 initializeApp()
 
 const db = getFirestore()
 const NOTIFICATION_EMAIL = 'nadiaaskari777@gmail.com'
+const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY')
+const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET')
 
 type RequestData = Record<string, unknown>
 
@@ -64,6 +68,16 @@ function assertDateString(value: string, fieldName: string) {
   }
 
   return value
+}
+
+function getRequestOrigin(request: CallableRequest) {
+  const origin = request.rawRequest.headers.origin
+
+  if (typeof origin === 'string' && origin.startsWith('http')) {
+    return origin
+  }
+
+  return 'https://theborrowboutique-b7006.web.app'
 }
 
 async function queueEmailNotification(subject: string, lines: string[]) {
@@ -143,7 +157,7 @@ export const submitTryOnBooking = onCall({ region: 'us-central1' }, async (reque
   return { id: doc.id }
 })
 
-export const submitRentalRequest = onCall({ region: 'us-central1' }, async (request) => {
+export const submitRentalRequest = onCall({ region: 'us-central1', secrets: [stripeSecretKey] }, async (request) => {
   const data = request.data as RequestData
   const eventDate = assertDateString(requiredString(data, 'eventDate'), 'eventDate')
   const rentalStart = assertDateString(requiredString(data, 'rentalStart'), 'rentalStart')
@@ -173,10 +187,59 @@ export const submitRentalRequest = onCall({ region: 'us-central1' }, async (requ
     totalDue,
     deliveryMethod,
     deliveryNotes,
-    paymentStatus: optionalString(data.paymentLink) ? 'payment-link-opened' : 'payment-pending',
+    paymentStatus: 'checkout-created',
     status: 'requested',
     source: 'website',
     createdAt: FieldValue.serverTimestamp(),
+  })
+
+  const stripe = new Stripe(stripeSecretKey.value())
+  const origin = getRequestOrigin(request)
+  const checkoutSession = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: customer.email,
+    success_url: `${origin}?payment=success&rentalRequestId=${doc.id}`,
+    cancel_url: `${origin}?payment=cancelled&rentalRequestId=${doc.id}`,
+    metadata: {
+      rentalRequestId: doc.id,
+      dressId: requiredString(data, 'dressId'),
+      dressName,
+      size,
+    },
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: 'nzd',
+          product_data: {
+            name: `${dressName} rental`,
+            description: `Size ${size}. Rental ${rentalStart} to ${returnDate}.`,
+          },
+          unit_amount: Math.round(rentalPrice * 100),
+        },
+      },
+      ...(shippingFee > 0
+        ? [
+            {
+              quantity: 1,
+              price_data: {
+                currency: 'nzd',
+                product_data: {
+                  name: 'Shipping',
+                },
+                unit_amount: Math.round(shippingFee * 100),
+              },
+            },
+          ]
+        : []),
+    ],
+  })
+
+  await doc.update({
+    checkoutSessionId: checkoutSession.id,
+    checkoutUrl: checkoutSession.url,
+    paymentProvider: 'stripe',
+    updatedAt: FieldValue.serverTimestamp(),
   })
 
   await queueEmailNotification('New rental booking - The Borrow Boutique', [
@@ -196,5 +259,56 @@ export const submitRentalRequest = onCall({ region: 'us-central1' }, async (requ
     `Rental request ID: ${doc.id}`,
   ])
 
-  return { id: doc.id }
+  return { id: doc.id, checkoutUrl: checkoutSession.url }
 })
+
+export const stripeWebhook = onRequest(
+  { region: 'us-central1', secrets: [stripeSecretKey, stripeWebhookSecret] },
+  async (request, response) => {
+    const stripe = new Stripe(stripeSecretKey.value())
+    const signature = request.headers['stripe-signature']
+
+    if (!signature) {
+      response.status(400).send('Missing Stripe signature.')
+      return
+    }
+
+    let event: Stripe.Event
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        (request as typeof request & { rawBody: Buffer }).rawBody,
+        signature,
+        stripeWebhookSecret.value(),
+      )
+    } catch (error) {
+      console.error(error)
+      response.status(400).send('Invalid Stripe webhook signature.')
+      return
+    }
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object
+      const rentalRequestId = session.metadata?.rentalRequestId
+
+      if (rentalRequestId) {
+        await db.collection('rentalRequests').doc(rentalRequestId).update({
+          paymentStatus: 'paid',
+          paidAt: FieldValue.serverTimestamp(),
+          stripePaymentIntentId:
+            typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null,
+          updatedAt: FieldValue.serverTimestamp(),
+        })
+
+        await queueEmailNotification('Rental payment received - The Borrow Boutique', [
+          `Rental request ID: ${rentalRequestId}`,
+          `Stripe checkout session: ${session.id}`,
+          session.customer_details?.email ? `Customer email: ${session.customer_details.email}` : '',
+          session.amount_total ? `Amount paid: $${(session.amount_total / 100).toFixed(2)} NZD` : '',
+        ])
+      }
+    }
+
+    response.json({ received: true })
+  },
+)

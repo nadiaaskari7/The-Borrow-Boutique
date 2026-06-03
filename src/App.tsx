@@ -232,7 +232,7 @@ function App() {
     const form = event.currentTarget
     const data = formDataToPayload(form)
 
-    await createRentalRequest({
+    const result = await createRentalRequest({
       ...data,
       dressId: selectedDress.id,
       dressName: selectedDress.name,
@@ -244,9 +244,8 @@ function App() {
       paymentLink: selectedDress.paymentLink ?? '',
     })
 
-    if (selectedDress.paymentLink) {
-      window.open(selectedDress.paymentLink, '_blank', 'noopener,noreferrer')
-      setNotice('Rental request saved and the payment page has opened.')
+    if (result.data.checkoutUrl) {
+      window.location.href = result.data.checkoutUrl
     } else {
       setNotice('Rental request sent. We will confirm availability and payment details.')
     }

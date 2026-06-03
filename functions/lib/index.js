@@ -1,12 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.submitRentalRequest = exports.submitTryOnBooking = exports.submitInquiry = void 0;
+exports.stripeWebhook = exports.submitRentalRequest = exports.submitTryOnBooking = exports.submitInquiry = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
+const params_1 = require("firebase-functions/params");
 const https_1 = require("firebase-functions/v2/https");
+const stripe_1 = require("stripe");
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
 const NOTIFICATION_EMAIL = 'nadiaaskari777@gmail.com';
+const stripeSecretKey = (0, params_1.defineSecret)('STRIPE_SECRET_KEY');
+const stripeWebhookSecret = (0, params_1.defineSecret)('STRIPE_WEBHOOK_SECRET');
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function cleanString(value) {
     return typeof value === 'string' ? value.trim() : '';
@@ -48,6 +52,13 @@ function assertDateString(value, fieldName) {
         throw new https_1.HttpsError('invalid-argument', `${fieldName} must be a valid date.`);
     }
     return value;
+}
+function getRequestOrigin(request) {
+    const origin = request.rawRequest.headers.origin;
+    if (typeof origin === 'string' && origin.startsWith('http')) {
+        return origin;
+    }
+    return 'https://theborrowboutique-b7006.web.app';
 }
 async function queueEmailNotification(subject, lines) {
     await db.collection('mail').add({
@@ -117,7 +128,7 @@ exports.submitTryOnBooking = (0, https_1.onCall)({ region: 'us-central1' }, asyn
     ]);
     return { id: doc.id };
 });
-exports.submitRentalRequest = (0, https_1.onCall)({ region: 'us-central1' }, async (request) => {
+exports.submitRentalRequest = (0, https_1.onCall)({ region: 'us-central1', secrets: [stripeSecretKey] }, async (request) => {
     const data = request.data;
     const eventDate = assertDateString(requiredString(data, 'eventDate'), 'eventDate');
     const rentalStart = assertDateString(requiredString(data, 'rentalStart'), 'rentalStart');
@@ -146,10 +157,57 @@ exports.submitRentalRequest = (0, https_1.onCall)({ region: 'us-central1' }, asy
         totalDue,
         deliveryMethod,
         deliveryNotes,
-        paymentStatus: optionalString(data.paymentLink) ? 'payment-link-opened' : 'payment-pending',
+        paymentStatus: 'checkout-created',
         status: 'requested',
         source: 'website',
         createdAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    const stripe = new stripe_1.default(stripeSecretKey.value());
+    const origin = getRequestOrigin(request);
+    const checkoutSession = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer_email: customer.email,
+        success_url: `${origin}?payment=success&rentalRequestId=${doc.id}`,
+        cancel_url: `${origin}?payment=cancelled&rentalRequestId=${doc.id}`,
+        metadata: {
+            rentalRequestId: doc.id,
+            dressId: requiredString(data, 'dressId'),
+            dressName,
+            size,
+        },
+        line_items: [
+            {
+                quantity: 1,
+                price_data: {
+                    currency: 'nzd',
+                    product_data: {
+                        name: `${dressName} rental`,
+                        description: `Size ${size}. Rental ${rentalStart} to ${returnDate}.`,
+                    },
+                    unit_amount: Math.round(rentalPrice * 100),
+                },
+            },
+            ...(shippingFee > 0
+                ? [
+                    {
+                        quantity: 1,
+                        price_data: {
+                            currency: 'nzd',
+                            product_data: {
+                                name: 'Shipping',
+                            },
+                            unit_amount: Math.round(shippingFee * 100),
+                        },
+                    },
+                ]
+                : []),
+        ],
+    });
+    await doc.update({
+        checkoutSessionId: checkoutSession.id,
+        checkoutUrl: checkoutSession.url,
+        paymentProvider: 'stripe',
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
     await queueEmailNotification('New rental booking - The Borrow Boutique', [
         `Name: ${customer.customerName}`,
@@ -167,6 +225,42 @@ exports.submitRentalRequest = (0, https_1.onCall)({ region: 'us-central1' }, asy
         `Total due: $${totalDue}`,
         `Rental request ID: ${doc.id}`,
     ]);
-    return { id: doc.id };
+    return { id: doc.id, checkoutUrl: checkoutSession.url };
+});
+exports.stripeWebhook = (0, https_1.onRequest)({ region: 'us-central1', secrets: [stripeSecretKey, stripeWebhookSecret] }, async (request, response) => {
+    const stripe = new stripe_1.default(stripeSecretKey.value());
+    const signature = request.headers['stripe-signature'];
+    if (!signature) {
+        response.status(400).send('Missing Stripe signature.');
+        return;
+    }
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(request.rawBody, signature, stripeWebhookSecret.value());
+    }
+    catch (error) {
+        console.error(error);
+        response.status(400).send('Invalid Stripe webhook signature.');
+        return;
+    }
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const rentalRequestId = session.metadata?.rentalRequestId;
+        if (rentalRequestId) {
+            await db.collection('rentalRequests').doc(rentalRequestId).update({
+                paymentStatus: 'paid',
+                paidAt: firestore_1.FieldValue.serverTimestamp(),
+                stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null,
+                updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            });
+            await queueEmailNotification('Rental payment received - The Borrow Boutique', [
+                `Rental request ID: ${rentalRequestId}`,
+                `Stripe checkout session: ${session.id}`,
+                session.customer_details?.email ? `Customer email: ${session.customer_details.email}` : '',
+                session.amount_total ? `Amount paid: $${(session.amount_total / 100).toFixed(2)} NZD` : '',
+            ]);
+        }
+    }
+    response.json({ received: true });
 });
 //# sourceMappingURL=index.js.map

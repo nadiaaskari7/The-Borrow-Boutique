@@ -24,6 +24,9 @@ export async function createTryOnBooking(payload: FormPayload) {
 }
 
 export async function createRentalRequest(payload: FormPayload) {
-  const submitRentalRequest = httpsCallable<FormPayload, { id: string }>(functions, 'submitRentalRequest')
+  const submitRentalRequest = httpsCallable<FormPayload, { checkoutUrl?: string | null; id: string }>(
+    functions,
+    'submitRentalRequest',
+  )
   return submitRentalRequest(payload)
 }
