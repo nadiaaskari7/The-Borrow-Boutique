@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dress } from '../types'
 import { money } from '../utils/dresses'
-import { DressGrid } from '../components/DressGrid'
+import { DressCard } from '../components/DressCard'
 
 export function DressDetailPage({
   dress,
@@ -25,6 +25,8 @@ export function DressDetailPage({
   const uniqueImages = Array.from(new Set(images))
   const [activeImage, setActiveImage] = useState(0)
   const [deliveryMethod, setDeliveryMethod] = useState<'Post' | 'Pick up'>('Post')
+  const relatedScrollerRef = useRef<HTMLDivElement>(null)
+  const [relatedScrollState, setRelatedScrollState] = useState({ canScrollLeft: false, canScrollRight: false })
   const currentImage = uniqueImages[activeImage] ?? uniqueImages[0]
   const relatedDresses = useMemo(() => {
     if (!dress) return []
@@ -44,6 +46,37 @@ export function DressDetailPage({
 
     return [...related, ...fallback].slice(0, 4)
   }, [dress, dresses])
+
+  function updateRelatedScrollState() {
+    const scroller = relatedScrollerRef.current
+    if (!scroller) return
+
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth
+    setRelatedScrollState({
+      canScrollLeft: scroller.scrollLeft > 1,
+      canScrollRight: scroller.scrollLeft < maxScrollLeft - 1,
+    })
+  }
+
+  useEffect(() => {
+    updateRelatedScrollState()
+    window.addEventListener('resize', updateRelatedScrollState)
+
+    return () => window.removeEventListener('resize', updateRelatedScrollState)
+  }, [relatedDresses])
+
+  function scrollRelated(direction: 'left' | 'right') {
+    const scroller = relatedScrollerRef.current
+    if (!scroller) return
+
+    const card = scroller.querySelector<HTMLElement>('.dress-card')
+    const scrollAmount = card ? card.offsetWidth + 20 : scroller.clientWidth * 0.8
+
+    scroller.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    })
+  }
 
   if (!dress) {
     return (
@@ -192,11 +225,39 @@ export function DressDetailPage({
 
       {relatedDresses.length > 0 && (
         <section className="related-section">
-          <div className="section-title">
-            <p className="eyebrow">You may also like</p>
-            <h2>Similar rentals</h2>
+          <div className="related-heading">
+            <div className="section-title">
+              <p className="eyebrow">You may also like</p>
+              <h2>Similar rentals</h2>
+            </div>
           </div>
-          <DressGrid dresses={relatedDresses} onOpen={onOpen} />
+          <div className="related-carousel-shell">
+            {relatedScrollState.canScrollLeft && (
+              <button
+                aria-label="Scroll similar rentals left"
+                className="related-arrow related-arrow-left"
+                onClick={() => scrollRelated('left')}
+                type="button"
+              >
+                ←
+              </button>
+            )}
+            <div className="related-carousel" onScroll={updateRelatedScrollState} ref={relatedScrollerRef}>
+              {relatedDresses.map((relatedDress) => (
+                <DressCard dress={relatedDress} key={relatedDress.id} onOpen={onOpen} />
+              ))}
+            </div>
+            {relatedScrollState.canScrollRight && (
+              <button
+                aria-label="Scroll similar rentals right"
+                className="related-arrow related-arrow-right"
+                onClick={() => scrollRelated('right')}
+                type="button"
+              >
+                →
+              </button>
+            )}
+          </div>
         </section>
       )}
     </main>

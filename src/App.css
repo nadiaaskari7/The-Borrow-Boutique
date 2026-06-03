@@ -1227,6 +1227,64 @@ dd {
   padding-top: 56px;
 }
 
+.related-heading {
+  margin-bottom: 36px;
+}
+
+.related-heading .section-title {
+  margin-bottom: 0;
+}
+
+.related-carousel-shell {
+  position: relative;
+}
+
+.related-arrow {
+  align-items: center;
+  border-radius: 50%;
+  display: inline-flex;
+  font-size: 1.1rem;
+  height: 42px;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0;
+  position: absolute;
+  top: 42%;
+  transform: translateY(-50%);
+  width: 42px;
+  z-index: 3;
+}
+
+.related-arrow:hover,
+.related-arrow:focus-visible {
+  transform: translateY(calc(-50% - 1px));
+}
+
+.related-arrow-left {
+  left: -18px;
+}
+
+.related-arrow-right {
+  right: -18px;
+}
+
+.related-carousel {
+  display: grid;
+  gap: 20px;
+  grid-auto-columns: minmax(240px, 310px);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-bottom: 12px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.related-carousel .dress-card {
+  scroll-snap-align: start;
+}
+
 .product-accordions {
   border-top: 1px solid var(--border);
   display: grid;
