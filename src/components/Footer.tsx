@@ -52,8 +52,13 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
             <button onClick={() => onNavigate('inquiry')} type="button">
               Send a message
             </button>
-            <button onClick={() => onNavigate('inquiry')} type="button">
-              @theborrowboutique
+            <button
+              onClick={() =>
+                window.open('https://www.instagram.com/theborrowboutique.nz', '_blank', 'noopener,noreferrer')
+              }
+              type="button"
+            >
+              @theborrowboutique.nz
             </button>
             <button onClick={() => onNavigate('terms')} type="button">
               Rental policies
