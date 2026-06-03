@@ -27,10 +27,14 @@ function getAutomaticReturnDate(rentalStart: string) {
 }
 
 export function RentPage({
+  onSizeChange,
   selectedDress,
+  selectedSize,
   onSubmit,
 }: {
+  onSizeChange: (size: string) => void
   selectedDress?: Dress
+  selectedSize: string
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
   const [deliveryMethod, setDeliveryMethod] = useState<'Post' | 'Pick up'>('Post')
@@ -69,6 +73,10 @@ export function RentPage({
               <dd>{shippingFee ? money(shippingFee) : 'Pick up'}</dd>
             </div>
             <div>
+              <dt>Size</dt>
+              <dd>{selectedSize || selectedDress.sizes[0]}</dd>
+            </div>
+            <div>
               <dt>Total due</dt>
               <dd>{money(total)}</dd>
             </div>
@@ -94,6 +102,21 @@ export function RentPage({
         <label>
           Return date set automatically
           <input className="calculated-field" readOnly type="date" value={returnDate} />
+        </label>
+        <label className="wide">
+          Size to rent
+          <select
+            name="rentalSize"
+            onChange={(event) => onSizeChange(event.target.value)}
+            value={selectedSize || selectedDress.sizes[0]}
+            required
+          >
+            {selectedDress.sizes.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
         </label>
         <input name="returnDate" type="hidden" value={returnDate} />
         <input name="shippingFee" type="hidden" value={shippingFee} />

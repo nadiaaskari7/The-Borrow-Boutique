@@ -843,6 +843,10 @@ main.page-layout {
   gap: 6px;
 }
 
+.rental-size-picker button {
+  min-width: 48px;
+}
+
 /* ─── Page heading ───────────────────────────────── */
 .page-heading {
   margin-bottom: 42px;
@@ -1288,7 +1292,11 @@ dd {
   padding-bottom: 12px;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.customer-photos-carousel::-webkit-scrollbar {
+  display: none;
 }
 
 .customer-photos-carousel img {

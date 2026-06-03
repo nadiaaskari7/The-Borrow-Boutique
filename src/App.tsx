@@ -62,6 +62,7 @@ function App() {
     maxPrice: 250,
   })
   const [selectedDressId, setSelectedDressId] = useState('')
+  const [selectedRentalSize, setSelectedRentalSize] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [notice, setNotice] = useState('')
@@ -162,7 +163,23 @@ function App() {
 
   const selectedDress = dresses.find((dress) => dress.id === selectedDressId) ?? dresses[0]
 
+  useEffect(() => {
+    if (!selectedDress) return
+
+    if (!selectedDress.sizes.includes(selectedRentalSize as Dress['size'])) {
+      setSelectedRentalSize(selectedDress.sizes[0] ?? '')
+    }
+  }, [selectedDress, selectedRentalSize])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [page, selectedDressId])
+
   function selectDressAndPage(dressId: string, nextPage: Page) {
+    const nextDress = dresses.find((dress) => dress.id === dressId)
+    if (nextDress && (dressId !== selectedDressId || !nextDress.sizes.includes(selectedRentalSize as Dress['size']))) {
+      setSelectedRentalSize(nextDress.sizes[0] ?? '')
+    }
     setSelectedDressId(dressId)
     setPage(nextPage)
   }
@@ -210,7 +227,7 @@ function App() {
       ...data,
       dressId: selectedDress.id,
       dressName: selectedDress.name,
-      size: selectedDress.size,
+      size: String(data.rentalSize ?? selectedRentalSize ?? selectedDress.size),
       sizes: selectedDress.sizes,
       rawSize: selectedDress.rawSize,
       rawSizes: selectedDress.rawSizes,
@@ -270,6 +287,8 @@ function App() {
           onBack={() => setPage('dresses')}
           onOpen={(dressId) => selectDressAndPage(dressId, 'dress-detail')}
           onRent={(dressId) => selectDressAndPage(dressId, 'rent')}
+          onSizeChange={setSelectedRentalSize}
+          selectedSize={selectedRentalSize}
         />
       )}
 
@@ -289,7 +308,14 @@ function App() {
         <TryOnPage dresses={dresses} onSubmit={handleTryOn} selectedDress={selectedDress} />
       )}
 
-      {page === 'rent' && <RentPage onSubmit={handleRental} selectedDress={selectedDress} />}
+      {page === 'rent' && (
+        <RentPage
+          onSizeChange={setSelectedRentalSize}
+          onSubmit={handleRental}
+          selectedDress={selectedDress}
+          selectedSize={selectedRentalSize}
+        />
+      )}
 
       <Footer onNavigate={setPage} />
     </div>
