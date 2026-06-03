@@ -14,6 +14,7 @@ import { HowItWorksPage } from './pages/HowItWorksPage'
 import { HomePage } from './pages/HomePage'
 import { InquiryPage } from './pages/InquiryPage'
 import { RentPage } from './pages/RentPage'
+import { TermsPage } from './pages/TermsPage'
 import { TryOnPage } from './pages/TryOnPage'
 import type { Dress, DressFilters, Page } from './types'
 import { normalizeDressSizes } from './utils/dresses'
@@ -29,7 +30,6 @@ const fallbackDresses: Dress[] = [
     rawSizes: ['6'],
     color: 'Blush',
     rentalPrice: 89,
-    bond: 50,
     description: 'A sleek event dress for birthdays, engagement parties, and dinners.',
     available: true,
     isNew: true,
@@ -44,7 +44,6 @@ const fallbackDresses: Dress[] = [
     rawSizes: ['10'],
     color: 'Black',
     rentalPrice: 129,
-    bond: 80,
     description: 'Floor-length gown with a structured bodice and soft skirt.',
     available: true,
     isNew: false,
@@ -103,7 +102,6 @@ function App() {
               colour: data.colour,
               price: Number(data.price ?? data.rentalPrice ?? 0),
               rentalPrice: Number(data.rentalPrice ?? data.price ?? 0),
-              bond: Number(data.bond ?? 0),
               imageUrl,
               hoverImageUrl: data.hoverImageUrl ?? imageUrls[1],
               imageUrls,
@@ -216,7 +214,8 @@ function App() {
       rawSize: selectedDress.rawSize,
       rawSizes: selectedDress.rawSizes,
       rentalPrice: selectedDress.rentalPrice,
-      bond: selectedDress.bond ?? 0,
+      shippingFee: Number(data.shippingFee ?? 0),
+      totalDue: Number(data.totalDue ?? selectedDress.rentalPrice),
       paymentStatus: selectedDress.paymentLink ? 'payment-link-opened' : 'payment-pending',
       status: 'requested',
       createdAt: serverTimestamp(),
@@ -276,6 +275,8 @@ function App() {
       {page === 'how-it-works' && <HowItWorksPage onNavigate={setPage} />}
 
       {page === 'faq' && <FaqPage onNavigate={setPage} />}
+
+      {page === 'terms' && <TermsPage onNavigate={setPage} />}
 
       {page === 'inquiry' && (
         <InquiryPage dresses={dresses} onSubmit={handleInquiry} selectedDress={selectedDress} />

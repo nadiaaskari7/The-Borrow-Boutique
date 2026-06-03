@@ -14,13 +14,13 @@ const steps = [
   },
   {
     num: '03',
-    title: 'Request your rental',
-    body: 'Send your rental dates and contact details. We confirm your booking before anything is locked in.',
+    title: 'Book rental',
+    body: 'Send your rental start date, delivery method, and contact details. We confirm your booking before anything is locked in.',
   },
   {
     num: '04',
     title: 'Wear, then return',
-    body: 'Return the dress by the agreed date. Cleaning and bond terms are confirmed per booking.',
+    body: 'Return the dress on the automatic return date. Please do not clean it; cleaning is handled after return.',
   },
 ]
 

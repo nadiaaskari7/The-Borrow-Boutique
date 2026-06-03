@@ -25,6 +25,9 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
             <button onClick={() => onNavigate('faq')} type="button">
               FAQ
             </button>
+            <button onClick={() => onNavigate('terms')} type="button">
+              Terms
+            </button>
           </nav>
         </div>
 
@@ -35,7 +38,7 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
               Book a try-on
             </button>
             <button onClick={() => onNavigate('dresses')} type="button">
-              Rent a dress
+              Book rental
             </button>
             <button onClick={() => onNavigate('inquiry')} type="button">
               Ask a question
@@ -52,7 +55,7 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
             <button onClick={() => onNavigate('inquiry')} type="button">
               @theborrowboutique
             </button>
-            <button onClick={() => onNavigate('faq')} type="button">
+            <button onClick={() => onNavigate('terms')} type="button">
               Rental policies
             </button>
           </nav>

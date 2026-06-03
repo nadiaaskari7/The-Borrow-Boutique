@@ -5,7 +5,7 @@ const faqs = [
   {
     question: 'How long is a rental?',
     answer:
-      'Rental length is confirmed with each booking. Add your event date, rental start, and return date when you request a dress.',
+      'The return date is set automatically from your rental start date. Weekday rentals, Monday to Thursday, are returned the following day or posted back with the return bag provided. Weekend rentals, Friday to Sunday, are returned or posted back on Monday.',
   },
   {
     question: 'Can I try a dress on first?',
@@ -13,19 +13,9 @@ const faqs = [
       'Yes. Use the try-on form to request a preferred date and time, plus any sizing notes for the dresses you want to try.',
   },
   {
-    question: 'How do payments work?',
-    answer:
-      'The app saves rental requests now. Once payment links are added to dresses, customers can open the secure payment page during checkout.',
-  },
-  {
-    question: 'What if a dress has multiple sizes?',
-    answer:
-      'Dresses with multiple Firebase sizes appear under every matching size filter, so one listing can show for S and M.',
-  },
-  {
     question: 'Do I need to clean the dress?',
     answer:
-      'Cleaning terms should be confirmed in your rental policy. Most rental boutiques include standard cleaning in the rental process.',
+      'No. Please do NOT clean the dress. Cleaning is handled by The Borrow Boutique after the dress is returned.',
   },
 ]
 
@@ -33,7 +23,7 @@ export function FaqPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
   return (
     <main className="info-page">
       <PageHeading eyebrow="Details before you book" title="FAQ">
-        Common questions about try-ons, renting, payment, sizing, and returns.
+        Common questions about try-ons, renting, cleaning, and returns.
       </PageHeading>
 
       <section className="faq-list">

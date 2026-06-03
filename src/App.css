@@ -904,6 +904,10 @@ main.page-layout {
   margin-bottom: 10px;
 }
 
+.terms-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .info-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1001,6 +1005,11 @@ textarea:focus {
 textarea { resize: vertical; }
 
 .wide { grid-column: 1 / -1; }
+
+.calculated-field {
+  background: var(--rose-50);
+  color: var(--text-body);
+}
 
 /* ─── Checkout ───────────────────────────────────── */
 .checkout-layout {

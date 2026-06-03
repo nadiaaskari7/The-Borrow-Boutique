@@ -80,7 +80,7 @@ export function HomePage({
         <div className="value-prop">
           <div className="value-prop-icon">◈</div>
           <h3>Designer labels for less</h3>
-          <p>Wear premium brands at a fraction of the retail price — rentals from $59.</p>
+          <p>Wear premium brands at a fraction of the retail price — rentals from $35.</p>
         </div>
         <div className="value-prop">
           <div className="value-prop-icon">↺</div>
@@ -126,13 +126,13 @@ export function HomePage({
           </div>
           <div className="hiw-step">
             <span className="hiw-step-num">03</span>
-            <h3>Confirm your rental</h3>
-            <p>Submit your dates and details. We'll confirm your booking before anything is locked in.</p>
+            <h3>Book rental</h3>
+            <p>Submit your rental start date and delivery method. We'll confirm your booking before anything is locked in.</p>
           </div>
           <div className="hiw-step">
             <span className="hiw-step-num">04</span>
             <h3>Wear, then return</h3>
-            <p>Return the dress by the agreed date. Cleaning is taken care of — just enjoy the event.</p>
+            <p>Return the dress on the automatic return date. Please do not clean it; cleaning is handled after return.</p>
           </div>
         </div>
         <div className="how-it-works-actions">

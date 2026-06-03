@@ -90,7 +90,7 @@ export function DressDetailPage({
           <p className="product-brand">{dress.brand ?? dress.designer ?? 'The Borrow Boutique'}</p>
           <h1>{dress.name}</h1>
           <p className="product-price">{money(dress.rentalPrice)}</p>
-          <p className="tax-note">Rental fee. Bond and delivery are confirmed with your booking.</p>
+          <p className="tax-note">Rental fee. Posting adds a $15 shipping fee.</p>
 
           <div className="booking-panel">
             <label>
@@ -116,13 +116,13 @@ export function DressDetailPage({
               </label>
               <label>
                 Return date
-                <input type="date" />
+                <input readOnly placeholder="Set automatically when you book" />
               </label>
             </div>
 
             <p className="booking-note">
-              For weekend events, choose the date you need the dress available. Rural or day events may
-              need an earlier delivery date.
+              Weekday rentals, Monday to Thursday, are returned the following day. Weekend rentals,
+              Friday to Sunday, are returned or posted back with the provided return bag on Monday.
             </p>
           </div>
 
@@ -132,8 +132,8 @@ export function DressDetailPage({
               <strong>{money(dress.rentalPrice)}</strong>
             </div>
             <div>
-              <span>Bond</span>
-              <strong>{money(dress.bond ?? 0)}</strong>
+              <span>Shipping</span>
+              <strong>{deliveryMethod === 'Post' ? '$15' : 'Pick up'}</strong>
             </div>
             <div>
               <span>Sizes</span>
@@ -143,7 +143,7 @@ export function DressDetailPage({
 
           <div className="detail-actions">
             <button onClick={() => onRent(dress.id)} type="button">
-              Request rental
+              Book rental
             </button>
             <button className="secondary" onClick={() => onAsk(dress.id)} type="button">
               Ask a question
@@ -181,8 +181,9 @@ export function DressDetailPage({
             <details>
               <summary>How rental works</summary>
               <p>
-                Submit a rental request with your dates. You will receive confirmation before the
-                rental is locked in. Payment links can be attached per dress when configured.
+                Choose your rental start date and delivery method. The return date is set automatically:
+                Monday to Thursday rentals are returned the following day, and Friday to Sunday rentals
+                are returned the following Monday.
               </p>
             </details>
           </section>

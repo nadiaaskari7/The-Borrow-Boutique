@@ -7,6 +7,7 @@ export type Page =
   | 'rent'
   | 'how-it-works'
   | 'faq'
+  | 'terms'
 
 export type BoutiqueSize = 'XS' | 'S' | 'M' | 'L'
 export type SizeFilter = 'All' | BoutiqueSize
@@ -33,7 +34,6 @@ export type Dress = {
   colour?: string
   price?: number
   rentalPrice: number
-  bond?: number
   imageUrl?: string
   hoverImageUrl?: string
   imageUrls?: string[]
