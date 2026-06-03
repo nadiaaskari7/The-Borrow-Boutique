@@ -1,7 +1,41 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { getDownloadURL, listAll, ref } from 'firebase/storage'
 import type { Dress } from '../types'
 import { money } from '../utils/dresses'
 import { DressCard } from '../components/DressCard'
+import { storage } from '../firebase/firebaseConfig'
+
+const GALLERY_NAME_STOP_WORDS = new Set([
+  'a',
+  'and',
+  'by',
+  'dress',
+  'gown',
+  'in',
+  'maxi',
+  'midi',
+  'mini',
+  'of',
+  'the',
+])
+
+function getGalleryNameKeywords(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/[-_]+/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 1 && !GALLERY_NAME_STOP_WORDS.has(word))
+}
+
+function getGalleryFolderScore(dressName: string, folderName: string) {
+  const dressKeywords = getGalleryNameKeywords(dressName)
+  const folderKeywords = new Set(getGalleryNameKeywords(decodeURIComponent(folderName)))
+
+  if (!dressKeywords.length || !folderKeywords.size) return 0
+
+  return dressKeywords.filter((keyword) => folderKeywords.has(keyword)).length / dressKeywords.length
+}
 
 export function DressDetailPage({
   dress,
@@ -26,7 +60,13 @@ export function DressDetailPage({
   const [activeImage, setActiveImage] = useState(0)
   const [deliveryMethod, setDeliveryMethod] = useState<'Post' | 'Pick up'>('Post')
   const relatedScrollerRef = useRef<HTMLDivElement>(null)
+  const customerPhotosScrollerRef = useRef<HTMLDivElement>(null)
   const [relatedScrollState, setRelatedScrollState] = useState({ canScrollLeft: false, canScrollRight: false })
+  const [customerPhotoScrollState, setCustomerPhotoScrollState] = useState({
+    canScrollLeft: false,
+    canScrollRight: false,
+  })
+  const [customerPhotos, setCustomerPhotos] = useState<string[]>([])
   const currentImage = uniqueImages[activeImage] ?? uniqueImages[0]
   const relatedDresses = useMemo(() => {
     if (!dress) return []
@@ -58,6 +98,17 @@ export function DressDetailPage({
     })
   }
 
+  function updateCustomerPhotoScrollState() {
+    const scroller = customerPhotosScrollerRef.current
+    if (!scroller) return
+
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth
+    setCustomerPhotoScrollState({
+      canScrollLeft: scroller.scrollLeft > 1,
+      canScrollRight: scroller.scrollLeft < maxScrollLeft - 1,
+    })
+  }
+
   useEffect(() => {
     updateRelatedScrollState()
     window.addEventListener('resize', updateRelatedScrollState)
@@ -65,12 +116,66 @@ export function DressDetailPage({
     return () => window.removeEventListener('resize', updateRelatedScrollState)
   }, [relatedDresses])
 
+  useEffect(() => {
+    updateCustomerPhotoScrollState()
+    window.addEventListener('resize', updateCustomerPhotoScrollState)
+
+    return () => window.removeEventListener('resize', updateCustomerPhotoScrollState)
+  }, [customerPhotos])
+
+  useEffect(() => {
+    async function loadCustomerPhotos() {
+      if (!dress?.name) {
+        setCustomerPhotos([])
+        return
+      }
+
+      try {
+        const galleryRoot = await listAll(ref(storage, 'gallery'))
+        const matchingFolder = galleryRoot.prefixes
+          .map((folder) => ({
+            folder,
+            score: getGalleryFolderScore(dress.name, folder.name),
+          }))
+          .filter((match) => match.score >= 0.5)
+          .sort((first, second) => second.score - first.score)[0]?.folder
+
+        if (!matchingFolder) {
+          setCustomerPhotos([])
+          return
+        }
+
+        const folder = await listAll(matchingFolder)
+        const photoUrls = await Promise.all(folder.items.map((item) => getDownloadURL(item)))
+        setCustomerPhotos(photoUrls)
+      } catch (error) {
+        console.error(error)
+        setCustomerPhotos([])
+      }
+    }
+
+    loadCustomerPhotos()
+  }, [dress?.name])
+
   function scrollRelated(direction: 'left' | 'right') {
     const scroller = relatedScrollerRef.current
     if (!scroller) return
 
     const card = scroller.querySelector<HTMLElement>('.dress-card')
     const scrollAmount = card ? card.offsetWidth + 20 : scroller.clientWidth * 0.8
+
+    scroller.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    })
+  }
+
+  function scrollCustomerPhotos(direction: 'left' | 'right') {
+    const scroller = customerPhotosScrollerRef.current
+    if (!scroller) return
+
+    const image = scroller.querySelector<HTMLElement>('img')
+    const scrollAmount = image ? image.offsetWidth + 16 : scroller.clientWidth * 0.8
 
     scroller.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
@@ -222,6 +327,46 @@ export function DressDetailPage({
           </section>
         </aside>
       </section>
+
+      {customerPhotos.length > 0 && (
+        <section className="customer-photos-section">
+          <div className="section-title">
+            <p className="eyebrow">Seen on customers</p>
+            <h2>Worn in real life</h2>
+          </div>
+          <div className="customer-photos-carousel-shell">
+            {customerPhotoScrollState.canScrollLeft && (
+              <button
+                aria-label="Scroll customer photos left"
+                className="related-arrow related-arrow-left"
+                onClick={() => scrollCustomerPhotos('left')}
+                type="button"
+              >
+                ←
+              </button>
+            )}
+            <div
+              className="customer-photos-carousel"
+              onScroll={updateCustomerPhotoScrollState}
+              ref={customerPhotosScrollerRef}
+            >
+              {customerPhotos.map((photoUrl, index) => (
+                <img alt={`${dress.name} customer photo ${index + 1}`} key={photoUrl} loading="lazy" src={photoUrl} />
+              ))}
+            </div>
+            {customerPhotoScrollState.canScrollRight && (
+              <button
+                aria-label="Scroll customer photos right"
+                className="related-arrow related-arrow-right"
+                onClick={() => scrollCustomerPhotos('right')}
+                type="button"
+              >
+                →
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       {relatedDresses.length > 0 && (
         <section className="related-section">

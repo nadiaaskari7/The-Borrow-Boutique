@@ -22,6 +22,9 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
             <button onClick={() => onNavigate('how-it-works')} type="button">
               How it works
             </button>
+            <button onClick={() => onNavigate('gallery')} type="button">
+              Gallery
+            </button>
             <button onClick={() => onNavigate('faq')} type="button">
               FAQ
             </button>

@@ -10,6 +10,7 @@ import { db, storage } from './firebase/firebaseConfig'
 import { DressesPage } from './pages/DressesPage'
 import { DressDetailPage } from './pages/DressDetailPage'
 import { FaqPage } from './pages/FaqPage'
+import { GalleryPage } from './pages/GalleryPage'
 import { HowItWorksPage } from './pages/HowItWorksPage'
 import { HomePage } from './pages/HomePage'
 import { InquiryPage } from './pages/InquiryPage'
@@ -273,6 +274,8 @@ function App() {
       )}
 
       {page === 'how-it-works' && <HowItWorksPage onNavigate={setPage} />}
+
+      {page === 'gallery' && <GalleryPage />}
 
       {page === 'faq' && <FaqPage onNavigate={setPage} />}
 

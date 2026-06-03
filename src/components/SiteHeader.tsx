@@ -53,6 +53,13 @@ export function SiteHeader({
         >
           How it works
         </button>
+        <button
+          className={currentPage === 'gallery' ? 'active' : ''}
+          onClick={() => onNavigate('gallery')}
+          type="button"
+        >
+          Gallery
+        </button>
         <button className={currentPage === 'faq' ? 'active' : ''} onClick={() => onNavigate('faq')} type="button">
           FAQ
         </button>

@@ -6,6 +6,7 @@ export type Page =
   | 'inquiry'
   | 'rent'
   | 'how-it-works'
+  | 'gallery'
   | 'faq'
   | 'terms'
 
