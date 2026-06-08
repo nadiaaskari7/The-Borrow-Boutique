@@ -43,4 +43,5 @@ export type Dress = {
   available?: boolean
   isNew?: boolean
   paymentLink?: string
+  bookedDates?: string[]
 }

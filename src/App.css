@@ -1424,6 +1424,7 @@ dd {
 
 .warning,
 .empty-state,
+.field-error,
 .payment-note {
   background: var(--rose-50);
   border: 1px solid var(--rose-200);

@@ -2,17 +2,19 @@ import type { FormEvent, ReactNode } from 'react'
 
 export function FormPanel({
   children,
+  disabled,
   onSubmit,
   submitLabel,
 }: {
   children: ReactNode
+  disabled?: boolean
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   submitLabel: string
 }) {
   return (
     <form className="form-panel" onSubmit={onSubmit}>
       {children}
-      <button className="wide" type="submit">
+      <button className="wide" disabled={disabled} type="submit">
         {submitLabel}
       </button>
     </form>

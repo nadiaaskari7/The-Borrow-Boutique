@@ -130,6 +130,7 @@ function App() {
               available: data.available ?? true,
               isNew: Boolean(data.isNew ?? data.new),
               paymentLink: data.paymentLink,
+              bookedDates: Array.isArray(data.bookedDates) ? data.bookedDates.filter(Boolean) : [],
             }
           }),
         )

@@ -60,6 +60,20 @@ function getRequestOrigin(request) {
     }
     return 'https://theborrowboutique-b7006.web.app';
 }
+function getBlockedDates(rentalStart, returnDate) {
+    const dates = [];
+    const current = new Date(`${rentalStart}T00:00:00`);
+    current.setDate(current.getDate() - 1);
+    const end = new Date(`${returnDate}T00:00:00`);
+    while (current <= end) {
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        dates.push(`${y}-${m}-${d}`);
+        current.setDate(current.getDate() + 1);
+    }
+    return dates;
+}
 async function queueEmailNotification(subject, lines) {
     await db.collection('mail').add({
         to: [NOTIFICATION_EMAIL],
@@ -130,8 +144,8 @@ exports.submitTryOnBooking = (0, https_1.onCall)({ region: 'us-central1' }, asyn
 });
 exports.submitRentalRequest = (0, https_1.onCall)({ region: 'us-central1', secrets: [stripeSecretKey] }, async (request) => {
     const data = request.data;
-    const eventDate = assertDateString(requiredString(data, 'eventDate'), 'eventDate');
     const rentalStart = assertDateString(requiredString(data, 'rentalStart'), 'rentalStart');
+    const eventDate = data.eventDate ? assertDateString(cleanString(data.eventDate), 'eventDate') : rentalStart;
     const returnDate = assertDateString(requiredString(data, 'returnDate'), 'returnDate');
     const rentalPrice = requiredNumber(data, 'rentalPrice');
     const shippingFee = requiredNumber(data, 'shippingFee');
@@ -215,7 +229,6 @@ exports.submitRentalRequest = (0, https_1.onCall)({ region: 'us-central1', secre
         `Phone: ${customer.phone}`,
         `Dress: ${dressName}`,
         `Size: ${size}`,
-        `Event date: ${eventDate}`,
         `Rental start: ${rentalStart}`,
         `Return date: ${returnDate}`,
         `Delivery method: ${deliveryMethod}`,
@@ -247,12 +260,20 @@ exports.stripeWebhook = (0, https_1.onRequest)({ region: 'us-central1', secrets:
         const session = event.data.object;
         const rentalRequestId = session.metadata?.rentalRequestId;
         if (rentalRequestId) {
+            const rentalDoc = await db.collection('rentalRequests').doc(rentalRequestId).get();
+            const rental = rentalDoc.data();
             await db.collection('rentalRequests').doc(rentalRequestId).update({
                 paymentStatus: 'paid',
                 paidAt: firestore_1.FieldValue.serverTimestamp(),
                 stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null,
                 updatedAt: firestore_1.FieldValue.serverTimestamp(),
             });
+            if (rental?.dressId && rental?.rentalStart && rental?.returnDate) {
+                const blockedDates = getBlockedDates(rental.rentalStart, rental.returnDate);
+                await db.collection('Dresses').doc(rental.dressId).update({
+                    bookedDates: firestore_1.FieldValue.arrayUnion(...blockedDates),
+                });
+            }
             await queueEmailNotification('Rental payment received - The Borrow Boutique', [
                 `Rental request ID: ${rentalRequestId}`,
                 `Stripe checkout session: ${session.id}`,

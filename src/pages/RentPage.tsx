@@ -15,6 +15,12 @@ function formatDateInputValue(date: Date) {
   return `${year}-${month}-${day}`
 }
 
+function addDays(dateStr: string, days: number) {
+  const date = new Date(`${dateStr}T00:00:00`)
+  date.setDate(date.getDate() + days)
+  return formatDateInputValue(date)
+}
+
 function getAutomaticReturnDate(rentalStart: string) {
   if (!rentalStart) return ''
 
@@ -24,6 +30,22 @@ function getAutomaticReturnDate(rentalStart: string) {
   date.setDate(date.getDate() + daysToAdd)
 
   return formatDateInputValue(date)
+}
+
+function hasDateConflict(rentalStart: string, returnDate: string, bookedDates: string[]) {
+  if (!rentalStart || !returnDate || !bookedDates.length) return false
+
+  const bookedSet = new Set(bookedDates)
+  const checkStart = addDays(rentalStart, -1)
+  const current = new Date(`${checkStart}T00:00:00`)
+  const end = new Date(`${returnDate}T00:00:00`)
+
+  while (current <= end) {
+    if (bookedSet.has(formatDateInputValue(current))) return true
+    current.setDate(current.getDate() + 1)
+  }
+
+  return false
 }
 
 export function RentPage({
@@ -51,6 +73,9 @@ export function RentPage({
   const shippingFee = deliveryMethod === 'Post' ? SHIPPING_FEE : 0
   const returnDate = getAutomaticReturnDate(rentalStart)
   const total = selectedDress.rentalPrice + shippingFee
+  const bookedDates = selectedDress.bookedDates ?? []
+  const dateConflict = hasDateConflict(rentalStart, returnDate, bookedDates)
+  const today = formatDateInputValue(new Date())
 
   return (
     <main className="checkout-layout">
@@ -83,11 +108,12 @@ export function RentPage({
           </dl>
         </div>
       </section>
-      <FormPanel onSubmit={onSubmit} submitLabel="Book rental">
+      <FormPanel onSubmit={onSubmit} submitLabel="Book rental" disabled={dateConflict}>
         <CustomerFields />
         <label>
           Rental start
           <input
+            min={today}
             name="rentalStart"
             onChange={(event) => setRentalStart(event.target.value)}
             type="date"
@@ -95,6 +121,9 @@ export function RentPage({
             required
           />
         </label>
+        {dateConflict && (
+          <p className="field-error">These dates are not available. Please choose different dates.</p>
+        )}
         <label>
           Return date set automatically
           <input className="calculated-field" readOnly type="date" value={returnDate} />

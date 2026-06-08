@@ -80,6 +80,23 @@ function getRequestOrigin(request: CallableRequest) {
   return 'https://theborrowboutique-b7006.web.app'
 }
 
+function getBlockedDates(rentalStart: string, returnDate: string) {
+  const dates: string[] = []
+  const current = new Date(`${rentalStart}T00:00:00`)
+  current.setDate(current.getDate() - 1)
+  const end = new Date(`${returnDate}T00:00:00`)
+
+  while (current <= end) {
+    const y = current.getFullYear()
+    const m = String(current.getMonth() + 1).padStart(2, '0')
+    const d = String(current.getDate()).padStart(2, '0')
+    dates.push(`${y}-${m}-${d}`)
+    current.setDate(current.getDate() + 1)
+  }
+
+  return dates
+}
+
 async function queueEmailNotification(subject: string, lines: string[]) {
   await db.collection('mail').add({
     to: [NOTIFICATION_EMAIL],
@@ -291,6 +308,9 @@ export const stripeWebhook = onRequest(
       const rentalRequestId = session.metadata?.rentalRequestId
 
       if (rentalRequestId) {
+        const rentalDoc = await db.collection('rentalRequests').doc(rentalRequestId).get()
+        const rental = rentalDoc.data()
+
         await db.collection('rentalRequests').doc(rentalRequestId).update({
           paymentStatus: 'paid',
           paidAt: FieldValue.serverTimestamp(),
@@ -298,6 +318,13 @@ export const stripeWebhook = onRequest(
             typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null,
           updatedAt: FieldValue.serverTimestamp(),
         })
+
+        if (rental?.dressId && rental?.rentalStart && rental?.returnDate) {
+          const blockedDates = getBlockedDates(rental.rentalStart, rental.returnDate)
+          await db.collection('Dresses').doc(rental.dressId).update({
+            bookedDates: FieldValue.arrayUnion(...blockedDates),
+          })
+        }
 
         await queueEmailNotification('Rental payment received - The Borrow Boutique', [
           `Rental request ID: ${rentalRequestId}`,
