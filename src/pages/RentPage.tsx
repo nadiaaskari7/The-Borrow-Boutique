@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { DayPicker } from 'react-day-picker'
+import 'react-day-picker/style.css'
 import type { FormEvent } from 'react'
 import type { Dress } from '../types'
 import { DressImage } from '../components/DressImage'
@@ -11,7 +13,6 @@ function formatDateInputValue(date: Date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
-
   return `${year}-${month}-${day}`
 }
 
@@ -23,28 +24,25 @@ function addDays(dateStr: string, days: number) {
 
 function getAutomaticReturnDate(rentalStart: string) {
   if (!rentalStart) return ''
-
   const date = new Date(`${rentalStart}T00:00:00`)
   const day = date.getDay()
   const daysToAdd = day >= 1 && day <= 4 ? 1 : (8 - day) % 7 || 1
   date.setDate(date.getDate() + daysToAdd)
-
   return formatDateInputValue(date)
 }
 
-function hasDateConflict(rentalStart: string, returnDate: string, bookedDates: string[]) {
-  if (!rentalStart || !returnDate || !bookedDates.length) return false
-
+function isDateUnavailable(date: Date, bookedDates: string[]) {
+  if (!bookedDates.length) return false
   const bookedSet = new Set(bookedDates)
-  const checkStart = addDays(rentalStart, -1)
+  const dateStr = formatDateInputValue(date)
+  const returnDate = getAutomaticReturnDate(dateStr)
+  const checkStart = addDays(dateStr, -1)
   const current = new Date(`${checkStart}T00:00:00`)
   const end = new Date(`${returnDate}T00:00:00`)
-
   while (current <= end) {
     if (bookedSet.has(formatDateInputValue(current))) return true
     current.setDate(current.getDate() + 1)
   }
-
   return false
 }
 
@@ -60,7 +58,7 @@ export function RentPage({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
   const [deliveryMethod, setDeliveryMethod] = useState<'Post' | 'Pick up'>('Post')
-  const [rentalStart, setRentalStart] = useState('')
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
 
   if (!selectedDress) {
     return (
@@ -70,12 +68,13 @@ export function RentPage({
     )
   }
 
-  const shippingFee = deliveryMethod === 'Post' ? SHIPPING_FEE : 0
-  const returnDate = getAutomaticReturnDate(rentalStart)
-  const total = selectedDress.rentalPrice + shippingFee
   const bookedDates = selectedDress.bookedDates ?? []
-  const dateConflict = hasDateConflict(rentalStart, returnDate, bookedDates)
-  const today = formatDateInputValue(new Date())
+  const rentalStart = selectedDate ? formatDateInputValue(selectedDate) : ''
+  const returnDate = getAutomaticReturnDate(rentalStart)
+  const shippingFee = deliveryMethod === 'Post' ? SHIPPING_FEE : 0
+  const total = selectedDress.rentalPrice + shippingFee
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
   return (
     <main className="checkout-layout">
@@ -108,22 +107,19 @@ export function RentPage({
           </dl>
         </div>
       </section>
-      <FormPanel onSubmit={onSubmit} submitLabel="Book rental" disabled={dateConflict}>
+      <FormPanel onSubmit={onSubmit} submitLabel="Book rental" disabled={!rentalStart}>
         <CustomerFields />
-        <label>
-          Rental start
-          <input
-            min={today}
-            name="rentalStart"
-            onChange={(event) => setRentalStart(event.target.value)}
-            type="date"
-            value={rentalStart}
-            required
+        <div className="calendar-field">
+          <span className="calendar-label">Rental start date</span>
+          <DayPicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            disabled={[{ before: today }, (date: Date) => isDateUnavailable(date, bookedDates)]}
+            classNames={{ root: 'rdp-root' }}
           />
-        </label>
-        {dateConflict && (
-          <p className="field-error">These dates are not available. Please choose different dates.</p>
-        )}
+          <input name="rentalStart" type="hidden" value={rentalStart} required />
+        </div>
         <label>
           Return date set automatically
           <input className="calculated-field" readOnly type="date" value={returnDate} />
