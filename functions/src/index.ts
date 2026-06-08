@@ -159,8 +159,8 @@ export const submitTryOnBooking = onCall({ region: 'us-central1' }, async (reque
 
 export const submitRentalRequest = onCall({ region: 'us-central1', secrets: [stripeSecretKey] }, async (request) => {
   const data = request.data as RequestData
-  const eventDate = assertDateString(requiredString(data, 'eventDate'), 'eventDate')
   const rentalStart = assertDateString(requiredString(data, 'rentalStart'), 'rentalStart')
+  const eventDate = data.eventDate ? assertDateString(cleanString(data.eventDate), 'eventDate') : rentalStart
   const returnDate = assertDateString(requiredString(data, 'returnDate'), 'returnDate')
   const rentalPrice = requiredNumber(data, 'rentalPrice')
   const shippingFee = requiredNumber(data, 'shippingFee')
@@ -248,7 +248,6 @@ export const submitRentalRequest = onCall({ region: 'us-central1', secrets: [str
     `Phone: ${customer.phone}`,
     `Dress: ${dressName}`,
     `Size: ${size}`,
-    `Event date: ${eventDate}`,
     `Rental start: ${rentalStart}`,
     `Return date: ${returnDate}`,
     `Delivery method: ${deliveryMethod}`,

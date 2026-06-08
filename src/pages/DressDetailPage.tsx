@@ -37,24 +37,6 @@ function getGalleryFolderScore(dressName: string, folderName: string) {
   return dressKeywords.filter((keyword) => folderKeywords.has(keyword)).length / dressKeywords.length
 }
 
-function formatDateInputValue(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-function getAutomaticReturnDate(rentalStart: string) {
-  if (!rentalStart) return ''
-
-  const date = new Date(`${rentalStart}T00:00:00`)
-  const day = date.getDay()
-  const daysToAdd = day >= 1 && day <= 4 ? 1 : (8 - day) % 7 || 1
-  date.setDate(date.getDate() + daysToAdd)
-
-  return formatDateInputValue(date)
-}
 
 export function DressDetailPage({
   dress,
@@ -81,8 +63,6 @@ export function DressDetailPage({
   )
   const uniqueImages = Array.from(new Set(images))
   const [activeImage, setActiveImage] = useState(0)
-  const [deliveryMethod, setDeliveryMethod] = useState<'Post' | 'Pick up'>('Post')
-  const [rentalStart, setRentalStart] = useState('')
   const relatedScrollerRef = useRef<HTMLDivElement>(null)
   const customerPhotosScrollerRef = useRef<HTMLDivElement>(null)
   const [relatedScrollState, setRelatedScrollState] = useState({ canScrollLeft: false, canScrollRight: false })
@@ -92,7 +72,6 @@ export function DressDetailPage({
   })
   const [customerPhotos, setCustomerPhotos] = useState<string[]>([])
   const currentImage = uniqueImages[activeImage] ?? uniqueImages[0]
-  const returnDate = getAutomaticReturnDate(rentalStart)
   const currentSelectedSize = selectedSize || dress?.sizes[0] || ''
   const relatedDresses = useMemo(() => {
     if (!dress) return []
@@ -258,33 +237,6 @@ export function DressDetailPage({
 
           <div className="booking-panel">
             <label>
-              Delivery method
-              <div className="segmented-control" role="group" aria-label="Delivery method">
-                {(['Post', 'Pick up'] as const).map((method) => (
-                  <button
-                    className={deliveryMethod === method ? 'active' : ''}
-                    key={method}
-                    onClick={() => setDeliveryMethod(method)}
-                    type="button"
-                  >
-                    {method}
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <div className="date-grid">
-              <label>
-                Rental start
-                <input onChange={(event) => setRentalStart(event.target.value)} type="date" value={rentalStart} />
-              </label>
-              <label>
-                Return date
-                <input className="calculated-field" readOnly type="date" value={returnDate} />
-              </label>
-            </div>
-
-            <label>
               Size to rent
               <div className="size-filter rental-size-picker" role="group" aria-label="Size to rent">
                 {dress.sizes.map((size) => (
@@ -310,10 +262,6 @@ export function DressDetailPage({
             <div>
               <span>Rental fee</span>
               <strong>{money(dress.rentalPrice)}</strong>
-            </div>
-            <div>
-              <span>Shipping</span>
-              <strong>{deliveryMethod === 'Post' ? '$15' : 'Pick up'}</strong>
             </div>
             <div>
               <span>Selected size</span>

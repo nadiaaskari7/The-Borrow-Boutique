@@ -86,10 +86,6 @@ export function RentPage({
       <FormPanel onSubmit={onSubmit} submitLabel="Book rental">
         <CustomerFields />
         <label>
-          Event date
-          <input name="eventDate" type="date" required />
-        </label>
-        <label>
           Rental start
           <input
             name="rentalStart"

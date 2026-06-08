@@ -74,6 +74,18 @@ function App() {
   const [notice, setNotice] = useState('')
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const payment = params.get('payment')
+    if (payment === 'success') {
+      setNotice('Payment successful! Your rental is confirmed. We will be in touch shortly.')
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (payment === 'cancelled') {
+      setNotice('Payment was cancelled. Your rental request has not been completed.')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  useEffect(() => {
     async function loadDresses() {
       setIsLoading(true)
       setLoadError('')
