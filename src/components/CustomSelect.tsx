@@ -11,6 +11,7 @@ export function CustomSelect({
   onChange,
   options,
   required,
+  searchable,
   value,
 }: {
   defaultValue?: string
@@ -18,26 +19,43 @@ export function CustomSelect({
   onChange?: (value: string) => void
   options: CustomSelectOption[]
   required?: boolean
+  searchable?: boolean
   value?: string
 }) {
   const generatedId = useId()
   const listboxId = `${generatedId}-listbox`
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const [internalValue, setInternalValue] = useState(defaultValue ?? options[0]?.value ?? '')
   const selectedValue = value ?? internalValue
-  const selectedIndex = Math.max(
-    0,
-    options.findIndex((option) => option.value === selectedValue),
-  )
   const selectedOption = useMemo(
     () => options.find((option) => option.value === selectedValue) ?? options[0],
     [options, selectedValue],
   )
 
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !query.trim()) return options
+    const lower = query.toLowerCase()
+    return options.filter((option) => option.label.toLowerCase().includes(lower))
+  }, [options, query, searchable])
+
+  const selectedIndex = Math.max(
+    0,
+    filteredOptions.findIndex((option) => option.value === selectedValue),
+  )
+
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) {
+      setQuery('')
+      return
+    }
+
+    if (searchable) {
+      setTimeout(() => searchRef.current?.focus(), 0)
+    }
 
     function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node
@@ -47,7 +65,7 @@ export function CustomSelect({
 
     document.addEventListener('pointerdown', handlePointerDown)
     return () => document.removeEventListener('pointerdown', handlePointerDown)
-  }, [isOpen])
+  }, [isOpen, searchable])
 
   function commitValue(nextValue: string) {
     if (value === undefined) {
@@ -59,9 +77,9 @@ export function CustomSelect({
   }
 
   function moveSelection(direction: 1 | -1) {
-    if (!options.length) return
-    const nextIndex = (selectedIndex + direction + options.length) % options.length
-    commitValue(options[nextIndex].value)
+    if (!filteredOptions.length) return
+    const nextIndex = (selectedIndex + direction + filteredOptions.length) % filteredOptions.length
+    commitValue(filteredOptions[nextIndex].value)
   }
 
   return (
@@ -96,18 +114,12 @@ export function CustomSelect({
           }
           if (event.key === 'ArrowDown') {
             event.preventDefault()
-            if (!isOpen) {
-              setIsOpen(true)
-              return
-            }
+            if (!isOpen) { setIsOpen(true); return }
             moveSelection(1)
           }
           if (event.key === 'ArrowUp') {
             event.preventDefault()
-            if (!isOpen) {
-              setIsOpen(true)
-              return
-            }
+            if (!isOpen) { setIsOpen(true); return }
             moveSelection(-1)
           }
         }}
@@ -118,18 +130,42 @@ export function CustomSelect({
       </button>
       {isOpen && (
         <div className="custom-select-menu" id={listboxId} ref={menuRef} role="listbox" tabIndex={-1}>
-          {options.map((option) => (
-            <button
-              aria-selected={option.value === selectedValue}
-              className={option.value === selectedValue ? 'selected' : ''}
-              key={option.value}
-              onClick={() => commitValue(option.value)}
-              role="option"
-              type="button"
-            >
-              {option.label}
-            </button>
-          ))}
+          {searchable && (
+            <div className="custom-select-search">
+              <input
+                ref={searchRef}
+                type="text"
+                placeholder="Search dresses…"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') { setIsOpen(false); return }
+                  if (event.key === 'ArrowDown') { event.preventDefault(); moveSelection(1) }
+                  if (event.key === 'ArrowUp') { event.preventDefault(); moveSelection(-1) }
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    if (filteredOptions.length) commitValue(filteredOptions[selectedIndex]?.value ?? filteredOptions[0].value)
+                  }
+                }}
+              />
+            </div>
+          )}
+          {filteredOptions.length === 0 ? (
+            <p className="custom-select-empty">No dresses found</p>
+          ) : (
+            filteredOptions.map((option) => (
+              <button
+                aria-selected={option.value === selectedValue}
+                className={option.value === selectedValue ? 'selected' : ''}
+                key={option.value}
+                onClick={() => commitValue(option.value)}
+                role="option"
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>

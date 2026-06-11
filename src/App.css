@@ -1265,6 +1265,38 @@ select option:checked {
   width: 6px;
 }
 
+.custom-select-search {
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+}
+
+.custom-select-search input {
+  background: var(--warm-100);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  min-height: 36px;
+  padding: 6px 10px;
+  transition: border-color 150ms ease;
+  width: 100%;
+}
+
+.custom-select-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200, 92, 126, 0.12);
+  outline: none;
+}
+
+.custom-select-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+  padding: 12px 14px;
+  text-align: center;
+}
+
 textarea { resize: vertical; }
 
 .wide { grid-column: 1 / -1; }

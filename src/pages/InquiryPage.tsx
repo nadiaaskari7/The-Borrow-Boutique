@@ -44,6 +44,7 @@ export function InquiryPage({
           <CustomSelect
             defaultValue={selectedDress?.id}
             name="dressId"
+            searchable
             options={dresses.map((dress) => ({
               label: `${dress.name} - ${dress.sizes.join(' / ')}`,
               value: dress.id,
