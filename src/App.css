@@ -189,6 +189,7 @@ nav button.active::after {
 .dropdown-menu {
   background: #ffffff;
   border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   display: grid;
   gap: 22px;
@@ -204,6 +205,19 @@ nav button.active::after {
     opacity 160ms ease,
     transform 160ms ease;
   z-index: 30;
+}
+
+.dropdown-menu::before {
+  background: #ffffff;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  content: '';
+  height: 12px;
+  left: 50%;
+  position: absolute;
+  top: -7px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
 }
 
 .nav-dropdown:hover .dropdown-menu,
@@ -230,12 +244,12 @@ nav button.active::after {
 .dropdown-menu button {
   background: transparent;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   color: var(--text-body);
   font-size: 0.9rem;
   justify-content: flex-start;
   min-height: auto;
-  padding: 5px 0;
+  padding: 7px 9px;
   text-align: left;
 }
 
@@ -245,7 +259,7 @@ nav button.active::after {
 
 .dropdown-menu button:hover,
 .dropdown-menu button:focus-visible {
-  background: transparent;
+  background: var(--rose-50);
   box-shadow: none;
   color: var(--accent-hover);
   transform: none;
@@ -1045,9 +1059,10 @@ label {
 input,
 select,
 textarea {
-  background: var(--warm-50);
+  background: linear-gradient(180deg, #ffffff 0%, var(--warm-50) 100%);
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   color: var(--text);
   font: inherit;
   font-size: 0.95rem;
@@ -1056,15 +1071,198 @@ textarea {
   min-height: 48px;
   padding: 10px 14px;
   text-transform: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(90deg, transparent calc(100% - 42px), rgba(242, 200, 216, 0.58) calc(100% - 42px)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23b86e91' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #ffffff 0%, %23fdfbfc 100%);
+  background-repeat: no-repeat;
+  background-position:
+    center,
+    right 12px center,
+    center;
+  background-size:
+    100% 100%,
+    18px 18px,
+    100% 100%;
+  cursor: pointer;
+  line-height: 1.25;
+  padding-right: 52px;
+  text-overflow: ellipsis;
+}
+
+select:hover,
+input:hover,
+textarea:hover {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 3px 12px rgba(184, 110, 145, 0.08);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(200, 92, 126, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 3px rgba(200, 92, 126, 0.12);
   outline: none;
+}
+
+select option {
+  background: #ffffff;
+  color: var(--text);
+  font: inherit;
+}
+
+select option:checked {
+  background: var(--rose-100);
+  color: var(--rose-800);
+}
+
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-input {
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
+}
+
+.custom-select-trigger {
+  align-items: center;
+  background:
+    linear-gradient(90deg, transparent calc(100% - 42px), rgba(242, 200, 216, 0.58) calc(100% - 42px)),
+    linear-gradient(180deg, #ffffff 0%, var(--warm-50) 100%);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  display: flex;
+  font-size: 0.95rem;
+  font-weight: 500;
+  justify-content: space-between;
+  letter-spacing: 0;
+  min-height: 48px;
+  padding: 10px 48px 10px 14px;
+  position: relative;
+  text-align: left;
+  text-transform: none;
+  width: 100%;
+}
+
+.custom-select-trigger::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23b86e91' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  content: '';
+  height: 18px;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 150ms ease;
+  width: 18px;
+}
+
+.custom-select-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-trigger[aria-expanded='true']::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-select-trigger:hover,
+.custom-select-trigger:focus-visible {
+  background:
+    linear-gradient(90deg, transparent calc(100% - 42px), rgba(242, 200, 216, 0.72) calc(100% - 42px)),
+    linear-gradient(180deg, #ffffff 0%, var(--rose-50) 100%);
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 3px rgba(200, 92, 126, 0.12);
+  color: var(--text);
+  transform: none;
+}
+
+.custom-select-menu {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  gap: 3px;
+  left: 0;
+  max-height: 282px;
+  overflow-y: auto;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+}
+
+.custom-select-menu button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  color: var(--text-body);
+  display: flex;
+  font-size: 0.9rem;
+  font-weight: 500;
+  gap: 10px;
+  justify-content: flex-start;
+  letter-spacing: 0;
+  min-height: 34px;
+  padding: 8px 10px;
+  text-align: left;
+  text-transform: none;
+  transform: none;
+  width: 100%;
+}
+
+.custom-select-menu button:hover,
+.custom-select-menu button:focus-visible {
+  background: var(--rose-50);
+  border: 0;
+  box-shadow: none;
+  color: var(--rose-800);
+  transform: none;
+}
+
+.custom-select-menu button.selected {
+  background: var(--rose-100);
+  color: var(--rose-800);
+  font-weight: 700;
+}
+
+.custom-select-menu button.selected::after {
+  background: var(--accent);
+  border-radius: 50%;
+  content: '';
+  height: 6px;
+  margin-left: auto;
+  width: 6px;
 }
 
 textarea { resize: vertical; }

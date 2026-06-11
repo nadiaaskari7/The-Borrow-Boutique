@@ -1,4 +1,5 @@
-import type { Dress, Page } from '../types'
+import { useNavigate } from 'react-router-dom'
+import type { Dress } from '../types'
 import { DressImage } from '../components/DressImage'
 import { DressGrid } from '../components/DressGrid'
 
@@ -22,13 +23,12 @@ const testimonials = [
 
 export function HomePage({
   dresses,
-  onNavigate,
   onOpen,
 }: {
   dresses: Dress[]
-  onNavigate: (page: Page) => void
   onOpen: (dressId: string) => void
 }) {
+  const navigate = useNavigate()
   const featured = dresses.filter((dress) => dress.isNew).slice(0, 4)
   const displayDresses = featured.length ? featured : dresses.slice(0, 4)
   const heroDress =
@@ -59,10 +59,10 @@ export function HomePage({
             last-minute weekend plan.
           </p>
           <div className="hero-actions">
-            <button onClick={() => onNavigate('dresses')} type="button">
+            <button onClick={() => navigate('/dresses')} type="button">
               Shop dresses
             </button>
-            <button className="secondary" onClick={() => onNavigate('try-on')} type="button">
+            <button className="secondary" onClick={() => navigate('/try-on')} type="button">
               Book a try-on
             </button>
           </div>
@@ -101,7 +101,7 @@ export function HomePage({
           onOpen={onOpen}
         />
         <div style={{ marginTop: '28px' }}>
-          <button className="secondary" onClick={() => onNavigate('dresses')} type="button">
+          <button className="secondary" onClick={() => navigate('/dresses')} type="button">
             View full collection
           </button>
         </div>
@@ -136,10 +136,10 @@ export function HomePage({
           </div>
         </div>
         <div className="how-it-works-actions">
-          <button onClick={() => onNavigate('try-on')} type="button">
+          <button onClick={() => navigate('/try-on')} type="button">
             Book a try-on
           </button>
-          <button className="secondary" onClick={() => onNavigate('how-it-works')} type="button">
+          <button className="secondary" onClick={() => navigate('/how-it-works')} type="button">
             Learn more
           </button>
         </div>

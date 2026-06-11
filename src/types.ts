@@ -1,17 +1,6 @@
-export type Page =
-  | 'home'
-  | 'dresses'
-  | 'dress-detail'
-  | 'try-on'
-  | 'inquiry'
-  | 'rent'
-  | 'how-it-works'
-  | 'gallery'
-  | 'faq'
-  | 'terms'
-
 export type BoutiqueSize = 'XS' | 'S' | 'M' | 'L'
 export type SizeFilter = 'All' | BoutiqueSize
+export type DeliveryMethod = 'Post' | 'Pick up'
 
 export type DressFilters = {
   size: SizeFilter

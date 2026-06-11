@@ -1,5 +1,5 @@
+import { useNavigate } from 'react-router-dom'
 import { PageHeading } from '../components/PageHeading'
-import type { Page } from '../types'
 
 const faqs = [
   {
@@ -19,7 +19,9 @@ const faqs = [
   },
 ]
 
-export function FaqPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
+export function FaqPage() {
+  const navigate = useNavigate()
+
   return (
     <main className="info-page">
       <PageHeading eyebrow="Details before you book" title="FAQ">
@@ -36,10 +38,10 @@ export function FaqPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
       </section>
 
       <div className="info-actions">
-        <button onClick={() => onNavigate('dresses')} type="button">
+        <button onClick={() => navigate('/dresses')} type="button">
           Browse dresses
         </button>
-        <button className="secondary" onClick={() => onNavigate('inquiry')} type="button">
+        <button className="secondary" onClick={() => navigate('/inquiry')} type="button">
           Ask a question
         </button>
       </div>

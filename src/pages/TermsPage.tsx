@@ -1,5 +1,5 @@
+import { useNavigate } from 'react-router-dom'
 import { PageHeading } from '../components/PageHeading'
-import type { Page } from '../types'
 
 const terms: { title: string; points: string[] }[] = [
   {
@@ -47,7 +47,9 @@ const terms: { title: string; points: string[] }[] = [
   },
 ]
 
-export function TermsPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
+export function TermsPage() {
+  const navigate = useNavigate()
+
   return (
     <main className="info-page">
       <PageHeading eyebrow="Rental policy" title="Terms and Conditions">
@@ -70,10 +72,10 @@ export function TermsPage({ onNavigate }: { onNavigate: (page: Page) => void }) 
       <p className="terms-agreement">By renting with us you agree to these terms and conditions.</p>
 
       <div className="info-actions">
-        <button onClick={() => onNavigate('dresses')} type="button">
+        <button onClick={() => navigate('/dresses')} type="button">
           Browse dresses
         </button>
-        <button className="secondary" onClick={() => onNavigate('faq')} type="button">
+        <button className="secondary" onClick={() => navigate('/faq')} type="button">
           Read FAQ
         </button>
       </div>

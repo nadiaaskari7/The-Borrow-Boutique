@@ -1,5 +1,5 @@
+import { useNavigate } from 'react-router-dom'
 import { PageHeading } from '../components/PageHeading'
-import type { Page } from '../types'
 
 const steps = [
   {
@@ -24,7 +24,9 @@ const steps = [
   },
 ]
 
-export function HowItWorksPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
+export function HowItWorksPage() {
+  const navigate = useNavigate()
+
   return (
     <main className="info-page">
       <PageHeading eyebrow="Renting made simple" title="How it works">
@@ -42,10 +44,10 @@ export function HowItWorksPage({ onNavigate }: { onNavigate: (page: Page) => voi
       </section>
 
       <div className="info-actions">
-        <button onClick={() => onNavigate('dresses')} type="button">
+        <button onClick={() => navigate('/dresses')} type="button">
           Browse dresses
         </button>
-        <button className="secondary" onClick={() => onNavigate('try-on')} type="button">
+        <button className="secondary" onClick={() => navigate('/try-on')} type="button">
           Book a try-on
         </button>
       </div>

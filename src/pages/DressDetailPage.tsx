@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { getDownloadURL, listAll, ref } from 'firebase/storage'
 import type { Dress } from '../types'
 import { money } from '../utils/dresses'
@@ -39,24 +40,20 @@ function getGalleryFolderScore(dressName: string, folderName: string) {
 
 
 export function DressDetailPage({
-  dress,
   dresses,
   onBack,
   onAsk,
   onOpen,
   onRent,
-  onSizeChange,
-  selectedSize,
 }: {
-  dress?: Dress
   dresses: Dress[]
   onBack: () => void
   onAsk: (dressId: string) => void
   onOpen: (dressId: string) => void
   onRent: (dressId: string) => void
-  onSizeChange: (size: string) => void
-  selectedSize: string
 }) {
+  const { dressId } = useParams<{ dressId: string }>()
+  const dress = dresses.find((d) => d.id === dressId)
   const images = useMemo(
     () => [dress?.imageUrl, ...(dress?.imageUrls ?? [])].filter(Boolean) as string[],
     [dress],
@@ -72,7 +69,6 @@ export function DressDetailPage({
   })
   const [customerPhotos, setCustomerPhotos] = useState<string[]>([])
   const currentImage = uniqueImages[activeImage] ?? uniqueImages[0]
-  const currentSelectedSize = selectedSize || dress?.sizes[0] || ''
   const relatedDresses = useMemo(() => {
     if (!dress) return []
 
@@ -234,40 +230,6 @@ export function DressDetailPage({
           <h1>{dress.name}</h1>
           <p className="product-price">{money(dress.rentalPrice)}</p>
           <p className="tax-note">Rental fee. Posting adds a $15 shipping fee.</p>
-
-          <div className="booking-panel">
-            <label>
-              Size to rent
-              <div className="size-filter rental-size-picker" role="group" aria-label="Size to rent">
-                {dress.sizes.map((size) => (
-                  <button
-                    className={currentSelectedSize === size ? 'active' : ''}
-                    key={size}
-                    onClick={() => onSizeChange(size)}
-                    type="button"
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <p className="booking-note">
-              Weekday rentals, Monday to Thursday, are returned the following day. Weekend rentals,
-              Friday to Sunday, are returned or posted back with the provided return bag on Monday.
-            </p>
-          </div>
-
-          <div className="detail-facts rental-summary">
-            <div>
-              <span>Rental fee</span>
-              <strong>{money(dress.rentalPrice)}</strong>
-            </div>
-            <div>
-              <span>Selected size</span>
-              <strong>{currentSelectedSize}</strong>
-            </div>
-          </div>
 
           <div className="detail-actions">
             <button onClick={() => onRent(dress.id)} type="button">

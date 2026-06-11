@@ -1,5 +1,8 @@
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { Dress } from '../types'
+import { createTryOnBooking, formDataToPayload } from '../api/bookings'
+import { CustomSelect } from '../components/CustomSelect'
 import { CustomerFields, FormPanel } from '../components/Forms'
 import { PageHeading } from '../components/PageHeading'
 
@@ -22,19 +25,36 @@ const TIME_SLOTS = generateTimeSlots()
 
 export function TryOnPage({
   dresses,
-  selectedDress,
-  onSubmit,
+  onNotice,
 }: {
   dresses: Dress[]
-  selectedDress?: Dress
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onNotice: (message: string) => void
 }) {
+  const [searchParams] = useSearchParams()
+  const preselectedId = searchParams.get('dress') ?? undefined
+  const selectedDress = dresses.find((d) => d.id === preselectedId)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const data = formDataToPayload(form)
+    const tryOnDress = dresses.find((dress) => dress.id === data.dressId)
+
+    await createTryOnBooking({
+      ...data,
+      dressName: tryOnDress?.name ?? '',
+    })
+
+    form.reset()
+    onNotice('Try-on request sent. We will confirm the time before it is locked in.')
+  }
+
   return (
     <main className="form-page">
       <PageHeading eyebrow="Appointment" title="Book a try-on">
         Request a time to visit, try your favourites, and confirm the best fit.
       </PageHeading>
-      <FormPanel onSubmit={onSubmit} submitLabel="Request try-on">
+      <FormPanel onSubmit={handleSubmit} submitLabel="Request try-on">
         <CustomerFields />
         <label>
           Preferred date
@@ -42,24 +62,22 @@ export function TryOnPage({
         </label>
         <label>
           Preferred time
-          <select name="preferredTime" required>
-            <option value="">Select a time</option>
-            {TIME_SLOTS.map((slot) => (
-              <option key={slot.value} value={slot.value}>
-                {slot.label}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            name="preferredTime"
+            options={[{ label: 'Select a time', value: '' }, ...TIME_SLOTS]}
+            required
+          />
         </label>
         <label>
           Dress to try
-          <select name="dressId" defaultValue={selectedDress?.id}>
-            {dresses.map((dress) => (
-              <option key={dress.id} value={dress.id}>
-                {dress.name} - {dress.sizes.join(' / ')}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            defaultValue={selectedDress?.id}
+            name="dressId"
+            options={dresses.map((dress) => ({
+              label: `${dress.name} - ${dress.sizes.join(' / ')}`,
+              value: dress.id,
+            }))}
+          />
         </label>
         <label className="wide">
           Notes

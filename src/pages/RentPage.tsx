@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/style.css'
 import type { FormEvent } from 'react'
-import type { Dress } from '../types'
+import type { DeliveryMethod, Dress } from '../types'
+import { createRentalRequest, formDataToPayload } from '../api/bookings'
 import { DressImage } from '../components/DressImage'
 import { CustomerFields, FormPanel } from '../components/Forms'
 import { money } from '../utils/dresses'
@@ -47,17 +49,17 @@ function isDateUnavailable(date: Date, bookedDates: string[]) {
 }
 
 export function RentPage({
-  onSizeChange,
-  selectedDress,
-  selectedSize,
-  onSubmit,
+  dresses,
+  onNotice,
 }: {
-  onSizeChange: (size: string) => void
-  selectedDress?: Dress
-  selectedSize: string
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  dresses: Dress[]
+  onNotice: (message: string) => void
 }) {
-  const [deliveryMethod, setDeliveryMethod] = useState<'Post' | 'Pick up'>('Post')
+  const { dressId } = useParams<{ dressId: string }>()
+  const selectedDress = dresses.find((d) => d.id === dressId)
+
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('Post')
+  const [selectedSize, setSelectedSize] = useState<string>(selectedDress?.sizes[0] ?? '')
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
 
   if (!selectedDress) {
@@ -73,8 +75,35 @@ export function RentPage({
   const returnDate = getAutomaticReturnDate(rentalStart)
   const shippingFee = deliveryMethod === 'Post' ? SHIPPING_FEE : 0
   const total = selectedDress.rentalPrice + shippingFee
+  const currentSize = selectedSize || selectedDress.sizes[0]
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const data = formDataToPayload(form)
+
+    const result = await createRentalRequest({
+      ...data,
+      dressId: selectedDress.id,
+      dressName: selectedDress.name,
+      size: currentSize,
+      sizes: selectedDress.sizes.join(', '),
+      rawSize: selectedDress.rawSize ?? '',
+      rawSizes: selectedDress.rawSizes?.join(', ') ?? '',
+      rentalPrice: String(selectedDress.rentalPrice),
+      paymentLink: selectedDress.paymentLink ?? '',
+    })
+
+    if (result.data.checkoutUrl) {
+      window.location.href = result.data.checkoutUrl
+    } else {
+      onNotice('Rental request sent. We will confirm availability and payment details.')
+    }
+
+    form.reset()
+  }
 
   return (
     <main className="checkout-layout">
@@ -98,7 +127,7 @@ export function RentPage({
             </div>
             <div>
               <dt>Size</dt>
-              <dd>{selectedSize || selectedDress.sizes[0]}</dd>
+              <dd>{currentSize}</dd>
             </div>
             <div>
               <dt>Total due</dt>
@@ -107,7 +136,7 @@ export function RentPage({
           </dl>
         </div>
       </section>
-      <FormPanel onSubmit={onSubmit} submitLabel="Book rental" disabled={!rentalStart}>
+      <FormPanel onSubmit={handleSubmit} submitLabel="Book rental" disabled={!rentalStart}>
         <CustomerFields />
         <div className="calendar-field">
           <span className="calendar-label">Rental start date</span>
@@ -128,8 +157,8 @@ export function RentPage({
           Size to rent
           <select
             name="rentalSize"
-            onChange={(event) => onSizeChange(event.target.value)}
-            value={selectedSize || selectedDress.sizes[0]}
+            onChange={(event) => setSelectedSize(event.target.value)}
+            value={currentSize}
             required
           >
             {selectedDress.sizes.map((size) => (
@@ -146,7 +175,7 @@ export function RentPage({
           Delivery method
           <select
             name="deliveryMethod"
-            onChange={(event) => setDeliveryMethod(event.target.value as 'Post' | 'Pick up')}
+            onChange={(event) => setDeliveryMethod(event.target.value as DeliveryMethod)}
             value={deliveryMethod}
             required
           >

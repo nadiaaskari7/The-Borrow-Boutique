@@ -1,33 +1,54 @@
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { Dress } from '../types'
+import { createInquiry, formDataToPayload } from '../api/bookings'
+import { CustomSelect } from '../components/CustomSelect'
 import { CustomerFields, FormPanel } from '../components/Forms'
 import { PageHeading } from '../components/PageHeading'
 
 export function InquiryPage({
   dresses,
-  selectedDress,
-  onSubmit,
+  onNotice,
 }: {
   dresses: Dress[]
-  selectedDress?: Dress
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onNotice: (message: string) => void
 }) {
+  const [searchParams] = useSearchParams()
+  const preselectedId = searchParams.get('dress') ?? undefined
+  const selectedDress = dresses.find((d) => d.id === preselectedId)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const data = formDataToPayload(form)
+    const inquiryDress = dresses.find((dress) => dress.id === data.dressId)
+
+    await createInquiry({
+      ...data,
+      dressName: inquiryDress?.name ?? '',
+    })
+
+    form.reset()
+    onNotice('Inquiry sent. We will reply as soon as possible.')
+  }
+
   return (
     <main className="form-page">
       <PageHeading eyebrow="Questions" title="Ask about a dress">
         Send a fit, date, pickup, or styling question before you book.
       </PageHeading>
-      <FormPanel onSubmit={onSubmit} submitLabel="Send inquiry">
+      <FormPanel onSubmit={handleSubmit} submitLabel="Send inquiry">
         <CustomerFields />
         <label>
           Dress
-          <select name="dressId" defaultValue={selectedDress?.id}>
-            {dresses.map((dress) => (
-              <option key={dress.id} value={dress.id}>
-                {dress.name} - {dress.sizes.join(' / ')}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            defaultValue={selectedDress?.id}
+            name="dressId"
+            options={dresses.map((dress) => ({
+              label: `${dress.name} - ${dress.sizes.join(' / ')}`,
+              value: dress.id,
+            }))}
+          />
         </label>
         <label className="wide">
           Message

@@ -1,6 +1,8 @@
-import type { Page } from '../types'
+import { useNavigate } from 'react-router-dom'
 
-export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
+export function Footer() {
+  const navigate = useNavigate()
+
   return (
     <footer className="site-footer">
       <div className="footer-inner">
@@ -16,19 +18,19 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
         <div className="footer-col">
           <h4>Explore</h4>
           <nav>
-            <button onClick={() => onNavigate('dresses')} type="button">
+            <button onClick={() => navigate('/dresses')} type="button">
               Browse dresses
             </button>
-            <button onClick={() => onNavigate('how-it-works')} type="button">
+            <button onClick={() => navigate('/how-it-works')} type="button">
               How it works
             </button>
-            <button onClick={() => onNavigate('gallery')} type="button">
+            <button onClick={() => navigate('/gallery')} type="button">
               Gallery
             </button>
-            <button onClick={() => onNavigate('faq')} type="button">
+            <button onClick={() => navigate('/faq')} type="button">
               FAQ
             </button>
-            <button onClick={() => onNavigate('terms')} type="button">
+            <button onClick={() => navigate('/terms')} type="button">
               Terms
             </button>
           </nav>
@@ -37,13 +39,13 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
         <div className="footer-col">
           <h4>Book</h4>
           <nav>
-            <button onClick={() => onNavigate('try-on')} type="button">
+            <button onClick={() => navigate('/try-on')} type="button">
               Book a try-on
             </button>
-            <button onClick={() => onNavigate('dresses')} type="button">
+            <button onClick={() => navigate('/dresses')} type="button">
               Book rental
             </button>
-            <button onClick={() => onNavigate('inquiry')} type="button">
+            <button onClick={() => navigate('/inquiry')} type="button">
               Ask a question
             </button>
           </nav>
@@ -52,7 +54,7 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
         <div className="footer-col">
           <h4>Contact</h4>
           <nav>
-            <button onClick={() => onNavigate('inquiry')} type="button">
+            <button onClick={() => navigate('/inquiry')} type="button">
               Send a message
             </button>
             <button
@@ -63,7 +65,7 @@ export function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {
             >
               @theborrowboutique.nz
             </button>
-            <button onClick={() => onNavigate('terms')} type="button">
+            <button onClick={() => navigate('/terms')} type="button">
               Rental policies
             </button>
           </nav>

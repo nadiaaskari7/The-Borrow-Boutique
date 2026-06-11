@@ -1,6 +1,7 @@
 import type { Dress, DressFilters, SizeFilter } from '../types'
 import { PageHeading } from '../components/PageHeading'
 import { DressGrid } from '../components/DressGrid'
+import { CustomSelect } from '../components/CustomSelect'
 import { boutiqueSizes } from '../utils/dresses'
 
 export function DressesPage({
@@ -67,38 +68,29 @@ export function DressesPage({
 
             <label className="filter-group">
               <span>Colour</span>
-              <select value={filters.colour} onChange={(event) => updateFilter('colour', event.target.value)}>
-                <option value="All">All colours</option>
-                {colours.map((colour) => (
-                  <option key={colour} value={colour}>
-                    {colour}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                onChange={(value) => updateFilter('colour', value)}
+                options={[{ label: 'All colours', value: 'All' }, ...colours.map((colour) => ({ label: colour, value: colour }))]}
+                value={filters.colour}
+              />
             </label>
 
             <label className="filter-group">
               <span>Brand</span>
-              <select value={filters.brand} onChange={(event) => updateFilter('brand', event.target.value)}>
-                <option value="All">All brands</option>
-                {brands.map((brand) => (
-                  <option key={brand} value={brand}>
-                    {brand}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                onChange={(value) => updateFilter('brand', value)}
+                options={[{ label: 'All brands', value: 'All' }, ...brands.map((brand) => ({ label: brand, value: brand }))]}
+                value={filters.brand}
+              />
             </label>
 
             <label className="filter-group">
               <span>Type</span>
-              <select value={filters.type} onChange={(event) => updateFilter('type', event.target.value)}>
-                <option value="All">All types</option>
-                {types.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                onChange={(value) => updateFilter('type', value)}
+                options={[{ label: 'All types', value: 'All' }, ...types.map((type) => ({ label: type, value: type }))]}
+                value={filters.type}
+              />
             </label>
 
             <label className="filter-group">

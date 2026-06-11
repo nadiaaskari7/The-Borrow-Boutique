@@ -1,28 +1,30 @@
-import type { DressFilters, Page } from '../types'
+import { useLocation, useNavigate } from 'react-router-dom'
+import type { DressFilters } from '../types'
 
 export function SiteHeader({
-  currentPage,
   onBrowseFilter,
-  onNavigate,
 }: {
-  currentPage: Page
   onBrowseFilter: (filters: Partial<DressFilters>) => void
-  onNavigate: (page: Page) => void
 }) {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  const isDresses = pathname === '/dresses' || pathname.startsWith('/dresses/')
+
   return (
     <header className="site-header">
-      <button className="brand" onClick={() => onNavigate('home')} type="button">
+      <button className="brand" onClick={() => navigate('/')} type="button">
         <span>The Borrow Boutique</span>
         <small>Dress rentals</small>
       </button>
       <nav aria-label="Primary navigation">
-        <button className={currentPage === 'home' ? 'active' : ''} onClick={() => onNavigate('home')} type="button">
+        <button className={pathname === '/' ? 'active' : ''} onClick={() => navigate('/')} type="button">
           Home
         </button>
         <div className="nav-dropdown">
           <button
-            className={currentPage === 'dresses' || currentPage === 'dress-detail' ? 'active' : ''}
-            onClick={() => onNavigate('dresses')}
+            className={isDresses ? 'active' : ''}
+            onClick={() => navigate('/dresses')}
             type="button"
           >
             Dresses
@@ -47,38 +49,42 @@ export function SiteHeader({
           </div>
         </div>
         <button
-          className={currentPage === 'how-it-works' ? 'active' : ''}
-          onClick={() => onNavigate('how-it-works')}
+          className={pathname === '/how-it-works' ? 'active' : ''}
+          onClick={() => navigate('/how-it-works')}
           type="button"
         >
           How it works
         </button>
         <button
-          className={currentPage === 'gallery' ? 'active' : ''}
-          onClick={() => onNavigate('gallery')}
+          className={pathname === '/gallery' ? 'active' : ''}
+          onClick={() => navigate('/gallery')}
           type="button"
         >
           Gallery
         </button>
-        <button className={currentPage === 'faq' ? 'active' : ''} onClick={() => onNavigate('faq')} type="button">
+        <button
+          className={pathname === '/faq' ? 'active' : ''}
+          onClick={() => navigate('/faq')}
+          type="button"
+        >
           FAQ
         </button>
         <button
-          className={currentPage === 'try-on' ? 'active' : ''}
-          onClick={() => onNavigate('try-on')}
+          className={pathname === '/try-on' ? 'active' : ''}
+          onClick={() => navigate('/try-on')}
           type="button"
         >
           Try-on
         </button>
         <button
-          className={currentPage === 'inquiry' ? 'active' : ''}
-          onClick={() => onNavigate('inquiry')}
+          className={pathname === '/inquiry' ? 'active' : ''}
+          onClick={() => navigate('/inquiry')}
           type="button"
         >
           Contact
         </button>
       </nav>
-      <button className="header-cta" onClick={() => onNavigate('dresses')} type="button">
+      <button className="header-cta" onClick={() => navigate('/dresses')} type="button">
         Browse collection
       </button>
     </header>
