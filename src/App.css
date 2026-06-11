@@ -912,6 +912,26 @@ main.page-layout {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.terms-grid ul {
+  list-style: disc;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.terms-grid li {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.terms-agreement {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
 .info-actions {
   display: flex;
   flex-wrap: wrap;

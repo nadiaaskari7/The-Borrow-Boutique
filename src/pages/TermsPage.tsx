@@ -1,30 +1,49 @@
 import { PageHeading } from '../components/PageHeading'
 import type { Page } from '../types'
 
-const terms = [
+const terms: { title: string; points: string[] }[] = [
   {
-    title: 'Bookings',
-    body: 'A rental is confirmed once The Borrow Boutique accepts your booking request. Please check your event date, rental start date, delivery method, and contact details before submitting.',
+    title: 'Cancellations & Refunds',
+    points: [
+      'Cancel at least 7 days before your pick-up or postage date for a full refund.',
+      'Cancellations made within a week of the event may receive a partial refund.',
+      'No refunds for change of mind or sizing issues — try-ons are available before renting!',
+    ],
   },
   {
-    title: 'Rental Length and Returns',
-    body: 'Return dates are set automatically. Weekday rentals, Monday to Thursday, must be returned the following day or posted back using the return bag provided. Weekend rentals, Friday to Sunday, must be returned or posted back on Monday.',
+    title: 'Care & Returns',
+    points: [
+      'Please do not wash or attempt to clean any garments.',
+      'Notify us immediately if your dress is damaged.',
+      'Damage fees may apply depending on severity.',
+      'If the item is damaged beyond repair, you\'ll be required to pay the full retail price.',
+    ],
   },
   {
-    title: 'Shipping',
-    body: 'Pick up is free. Posted rentals include a $15 shipping fee, which is added to the total at booking.',
+    title: 'Late Fees',
+    points: [
+      'Please return your rental on time as other customers may be waiting!',
+      'Late returns incur a $10 per day fee.',
+      'Weekend rentals (Fri–Sun) must be returned by Monday night.',
+      'Weekday rentals must be returned the next day.',
+      'DM us if you need an extension — we\'re happy to arrange something if possible.',
+    ],
   },
   {
-    title: 'Cleaning',
-    body: 'Do not clean the dress. Cleaning is handled by The Borrow Boutique after return. Please return the dress in its worn condition and let us know about any marks or damage.',
+    title: 'Payments & Try-Ons',
+    points: [
+      'Rentals are only confirmed once payment is received (send proof of bank transfer).',
+      'The price for postage will depend on various factors — we will let you know the price via DM.',
+      'Try-ons available! DM us to arrange a time and we\'ll send the address.',
+      'Pick-up times are arranged via DM for your convenience.',
+    ],
   },
   {
-    title: 'Care and Damage',
-    body: 'You are responsible for taking reasonable care of the dress while it is with you. Lost items, late returns, significant damage, or unreturned dresses may result in additional charges.',
-  },
-  {
-    title: 'Cancellations',
-    body: 'If you need to change or cancel a rental, contact The Borrow Boutique as soon as possible so the booking can be reviewed before the rental date.',
+    title: 'General Info',
+    points: [
+      'Our dresses may show minor general wear & tear — this is normal for rentals.',
+      'If you have any concerns about the quality, please contact us ASAP so we can make it right!',
+    ],
   },
 ]
 
@@ -39,10 +58,16 @@ export function TermsPage({ onNavigate }: { onNavigate: (page: Page) => void }) 
         {terms.map((term) => (
           <article key={term.title}>
             <h2>{term.title}</h2>
-            <p>{term.body}</p>
+            <ul>
+              {term.points.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
           </article>
         ))}
       </section>
+
+      <p className="terms-agreement">By renting with us you agree to these terms and conditions.</p>
 
       <div className="info-actions">
         <button onClick={() => onNavigate('dresses')} type="button">
