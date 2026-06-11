@@ -63,7 +63,15 @@ export function Footer() {
               }
               type="button"
             >
-              @theborrowboutique.nz
+              Instagram
+            </button>
+            <button
+              onClick={() =>
+                window.open('https://www.tiktok.com/@theborrowboutique.nz', '_blank', 'noopener,noreferrer')
+              }
+              type="button"
+            >
+              TikTok
             </button>
             <button onClick={() => navigate('/terms')} type="button">
               Rental policies
