@@ -35,7 +35,6 @@ export function TryOnPage({
   const selectedDress = dresses.find((d) => d.id === preselectedId)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
     const form = event.currentTarget
     const data = formDataToPayload(form)
     const tryOnDress = dresses.find((dress) => dress.id === data.dressId)

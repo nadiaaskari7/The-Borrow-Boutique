@@ -18,7 +18,6 @@ export function InquiryPage({
   const selectedDress = dresses.find((d) => d.id === preselectedId)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
     const form = event.currentTarget
     const data = formDataToPayload(form)
     const inquiryDress = dresses.find((dress) => dress.id === data.dressId)

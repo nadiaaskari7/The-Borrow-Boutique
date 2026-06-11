@@ -80,7 +80,6 @@ export function RentPage({
   today.setHours(0, 0, 0, 0)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
     const form = event.currentTarget
     const data = formDataToPayload(form)
 

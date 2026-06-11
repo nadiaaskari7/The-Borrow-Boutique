@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
 export function FormPanel({
@@ -8,14 +9,34 @@ export function FormPanel({
 }: {
   children: ReactNode
   disabled?: boolean
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void> | void
   submitLabel: string
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    try {
+      await onSubmit(event)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
-    <form className="form-panel" onSubmit={onSubmit}>
+    <form className="form-panel" onSubmit={handleSubmit}>
       {children}
-      <button className="wide" disabled={disabled} type="submit">
-        {submitLabel}
+      <button className="wide" disabled={disabled || isSubmitting} type="submit">
+        {isSubmitting ? (
+          <>
+            <span className="btn-spinner" aria-hidden="true" />
+            <span>Sending…</span>
+          </>
+        ) : (
+          submitLabel
+        )}
       </button>
     </form>
   )

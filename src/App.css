@@ -272,16 +272,36 @@ nav button.active::after {
   padding: 8px 20px !important;
 }
 
+/* ─── Spinner ───────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-spinner {
+  animation: spin 650ms linear infinite;
+  border: 2px solid rgba(46, 15, 26, 0.25);
+  border-top-color: #2e0f1a;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  height: 14px;
+  width: 14px;
+}
+
 /* ─── Buttons ────────────────────────────────────── */
 button {
+  align-items: center;
   background: #f2afc5;
   border: 1.5px solid #e695ae;
   border-radius: var(--radius-sm);
   color: #2e0f1a;
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
+  gap: 8px;
+  justify-content: center;
   letter-spacing: 0.02em;
   min-height: 46px;
   padding: 10px 24px;
@@ -291,6 +311,12 @@ button {
     box-shadow 160ms ease,
     color 160ms ease,
     transform 140ms ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none !important;
 }
 
 button:hover,
