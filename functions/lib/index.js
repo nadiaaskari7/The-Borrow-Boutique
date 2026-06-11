@@ -74,6 +74,163 @@ function getBlockedDates(rentalStart, returnDate) {
     }
     return dates;
 }
+function formatDate(dateStr) {
+    const date = new Date(`${dateStr}T00:00:00`);
+    return date.toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+async function sendCustomerConfirmationEmail(rental, bookingId) {
+    const firstName = rental.customerName?.split(' ')[0] ?? rental.customerName ?? 'there';
+    const rentalStartFormatted = formatDate(rental.rentalStart);
+    const returnDateFormatted = formatDate(rental.returnDate);
+    const rentalPrice = Number(rental.rentalPrice ?? 0).toFixed(2);
+    const shippingFee = Number(rental.shippingFee ?? 0).toFixed(2);
+    const totalDue = Number(rental.totalDue ?? 0).toFixed(2);
+    const hasShipping = Number(rental.shippingFee) > 0;
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#fdf2f4;font-family:Georgia,serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf2f4;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#be185d;padding:36px 40px;text-align:center;border-radius:12px 12px 0 0;">
+            <p style="margin:0 0 4px;color:#fce7f3;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">The Borrow Boutique</p>
+            <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:normal;">Booking Confirmed</h1>
+          </td>
+        </tr>
+
+        <!-- Greeting -->
+        <tr>
+          <td style="background:#ffffff;padding:36px 40px 24px;">
+            <p style="margin:0 0 12px;color:#4a1942;font-size:16px;">Hi ${firstName},</p>
+            <p style="margin:0;color:#6b7280;font-size:15px;line-height:1.6;">Thank you for your rental — your booking is confirmed and payment has been received. Everything you need to know is below.</p>
+          </td>
+        </tr>
+
+        <!-- Dress details -->
+        <tr>
+          <td style="background:#ffffff;padding:0 40px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf2f4;border-radius:8px;padding:24px;">
+              <tr>
+                <td>
+                  <p style="margin:0 0 16px;color:#be185d;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">Your Rental</p>
+                  <p style="margin:0 0 4px;color:#1f2937;font-size:20px;">${rental.dressName}</p>
+                  <p style="margin:0;color:#6b7280;font-size:14px;font-family:Arial,sans-serif;">Size ${rental.size}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Dates -->
+        <tr>
+          <td style="background:#ffffff;padding:0 40px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="50%" style="padding-right:8px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf2f4;border-radius:8px;padding:20px;">
+                    <tr><td>
+                      <p style="margin:0 0 6px;color:#be185d;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">Rental Start</p>
+                      <p style="margin:0;color:#1f2937;font-size:14px;font-family:Arial,sans-serif;">${rentalStartFormatted}</p>
+                    </td></tr>
+                  </table>
+                </td>
+                <td width="50%" style="padding-left:8px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fce7f3;border:2px solid #be185d;border-radius:8px;padding:20px;">
+                    <tr><td>
+                      <p style="margin:0 0 6px;color:#be185d;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">Return By</p>
+                      <p style="margin:0;color:#1f2937;font-size:14px;font-weight:bold;font-family:Arial,sans-serif;">${returnDateFormatted}</p>
+                    </td></tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Delivery -->
+        <tr>
+          <td style="background:#ffffff;padding:0 40px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf2f4;border-radius:8px;padding:20px;">
+              <tr>
+                <td>
+                  <p style="margin:0 0 6px;color:#be185d;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">Delivery</p>
+                  <p style="margin:0;color:#1f2937;font-size:14px;font-family:Arial,sans-serif;">${rental.deliveryMethod}${rental.deliveryNotes ? ' — ' + rental.deliveryNotes : ''}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Receipt -->
+        <tr>
+          <td style="background:#ffffff;padding:0 40px 24px;">
+            <p style="margin:0 0 12px;color:#be185d;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">Payment Receipt</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #fce7f3;">
+              <tr>
+                <td style="padding:10px 0;color:#6b7280;font-size:14px;font-family:Arial,sans-serif;">Dress rental</td>
+                <td align="right" style="padding:10px 0;color:#1f2937;font-size:14px;font-family:Arial,sans-serif;">$${rentalPrice} NZD</td>
+              </tr>
+              ${hasShipping ? `<tr>
+                <td style="padding:10px 0;color:#6b7280;font-size:14px;font-family:Arial,sans-serif;border-top:1px solid #fce7f3;">Shipping</td>
+                <td align="right" style="padding:10px 0;color:#1f2937;font-size:14px;font-family:Arial,sans-serif;border-top:1px solid #fce7f3;">$${shippingFee} NZD</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding:14px 0 0;color:#1f2937;font-size:15px;font-weight:bold;font-family:Arial,sans-serif;border-top:2px solid #be185d;">Total paid</td>
+                <td align="right" style="padding:14px 0 0;color:#be185d;font-size:15px;font-weight:bold;font-family:Arial,sans-serif;border-top:2px solid #be185d;">$${totalDue} NZD</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Return reminder -->
+        <tr>
+          <td style="background:#ffffff;padding:0 40px 36px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fce7f3;border-left:4px solid #be185d;border-radius:0 8px 8px 0;padding:20px;">
+              <tr><td>
+                <p style="margin:0 0 6px;color:#be185d;font-size:13px;font-weight:bold;font-family:Arial,sans-serif;">Return reminder</p>
+                <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.6;font-family:Arial,sans-serif;">Please return or post the dress back by <strong style="color:#1f2937;">${returnDateFormatted}</strong>. Weekday rentals are returned the following day; weekend rentals are returned the following Monday. A return bag will be provided for posted rentals.</p>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#fdf2f4;padding:28px 40px;text-align:center;border-radius:0 0 12px 12px;border-top:1px solid #fce7f3;">
+            <p style="margin:0 0 4px;color:#be185d;font-size:14px;font-family:Arial,sans-serif;">Questions? Get in touch at <a href="mailto:${NOTIFICATION_EMAIL}" style="color:#be185d;">${NOTIFICATION_EMAIL}</a></p>
+            <p style="margin:8px 0 0;color:#9ca3af;font-size:12px;font-family:Arial,sans-serif;">The Borrow Boutique · New Zealand</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    await db.collection('mail').add({
+        to: [rental.email],
+        message: {
+            subject: `Booking confirmed — ${rental.dressName} · The Borrow Boutique`,
+            html,
+            text: [
+                `Hi ${firstName}, your booking is confirmed!`,
+                `Dress: ${rental.dressName} (Size ${rental.size})`,
+                `Rental start: ${rentalStartFormatted}`,
+                `Return by: ${returnDateFormatted}`,
+                `Delivery: ${rental.deliveryMethod}`,
+                `Total paid: $${totalDue} NZD`,
+                `Booking ID: ${bookingId}`,
+                `Questions? Email ${NOTIFICATION_EMAIL}`,
+            ].join('\n'),
+        },
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+}
 async function queueEmailNotification(subject, lines) {
     await db.collection('mail').add({
         to: [NOTIFICATION_EMAIL],
@@ -273,6 +430,9 @@ exports.stripeWebhook = (0, https_1.onRequest)({ region: 'us-central1', secrets:
                 await db.collection('Dresses').doc(rental.dressId).update({
                     bookedDates: firestore_1.FieldValue.arrayUnion(...blockedDates),
                 });
+            }
+            if (rental) {
+                await sendCustomerConfirmationEmail(rental, rentalRequestId);
             }
             await queueEmailNotification('Rental payment received - The Borrow Boutique', [
                 `Rental request ID: ${rentalRequestId}`,
